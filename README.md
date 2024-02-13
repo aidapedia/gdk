@@ -1,2 +1,2 @@
-# devkit
-Development Kit that used on daily coding bases.
+# DEVKIT
+Development Kit that is used on a daily coding basis.
