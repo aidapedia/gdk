@@ -1,67 +1,40 @@
 package error
 
 import (
-	"net/http"
-
-	"github.com/aidapedia/devkit/util"
 	"github.com/google/uuid"
 )
 
-// ErrorKit type represent the error message
-type ErrorKit struct {
-	ID      string `json:"id,omitempty"`
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Detail  string `json:"details,omitempty"`
+// ErrorDetail type represent the error detail
+type ErrorDetail string
+
+// errorKit type represent the error message
+type errorKit struct {
+	ID      string      `json:"id,omitempty"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Detail  ErrorDetail `json:"details,omitempty"`
 }
 
 // Error function used to return error message
-func (e ErrorKit) Error() string {
-	return e.Detail
+func (e errorKit) Error() string {
+	return e.Message
 }
 
-var (
-	ErrorInternalServer *ErrorKit = &ErrorKit{
-		Code:    http.StatusInternalServerError,
-		Message: "Internal Server Error",
-		Detail:  "Internal Server Error.",
-	}
-
-	ErrorBadRequest *ErrorKit = &ErrorKit{
-		Code:    http.StatusBadRequest,
-		Message: "Bad Request",
-		Detail:  "Bad Request.",
-	}
-
-	ErrorUnauthorized *ErrorKit = &ErrorKit{
-		Code:    http.StatusUnauthorized,
-		Message: "Unauthorized",
-		Detail:  "Unauthorized.",
-	}
-
-	ErrorForbidden *ErrorKit = &ErrorKit{
-		Code:    http.StatusForbidden,
-		Message: "Forbidden",
-		Detail:  "Forbidden.",
-	}
-
-	ErrorNotFound *ErrorKit = &ErrorKit{
-		Code:    http.StatusNotFound,
-		Message: "Not Found",
-		Detail:  "Not Found.",
-	}
-)
-
 // ErrorWithDetail function used to return error message with detail
-func ErrorWithDetail(err *ErrorKit, detail string) *ErrorKit {
-	result := &ErrorKit{
-		ID:      err.ID,
-		Code:    err.Code,
-		Message: err.Message,
-		Detail:  util.TernaryEqualString(err.Detail, "", detail),
+func NewError(code int, args ...interface{}) *errorKit {
+	result := &errorKit{
+		ID:   uuid.New().String(),
+		Code: code,
 	}
-	if result.ID == "" {
-		result.ID = uuid.New().String()
+	// apply the arguments
+	for _, arg := range args {
+		switch arg := arg.(type) {
+		case ErrorDetail:
+			result.Detail = arg
+		case string:
+			result.Message = arg
+		}
 	}
+
 	return result
 }
