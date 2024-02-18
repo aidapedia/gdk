@@ -38,3 +38,16 @@ func NewError(code int, args ...interface{}) *errorKit {
 
 	return result
 }
+
+// CastError function used to convert error to errorKit
+func CastError(err error) *errorKit {
+	if err == nil {
+		return nil
+	}
+
+	if e, ok := err.(*errorKit); ok {
+		return e
+	}
+
+	return NewError(0, err.Error())
+}
