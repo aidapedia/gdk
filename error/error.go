@@ -9,22 +9,24 @@ type ErrorDetail string
 
 // errorKit type represent the error message
 type errorKit struct {
-	ID      string      `json:"id,omitempty"`
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Detail  ErrorDetail `json:"details,omitempty"`
+	ID       string      `json:"id,omitempty"`
+	Code     int         `json:"code"`
+	Message  string      `json:"message"`
+	Detail   ErrorDetail `json:"details,omitempty"`
+	RawError error       `json:"error"`
 }
 
 // Error function used to return error message
 func (e errorKit) Error() string {
-	return e.Message
+	return e.RawError.Error()
 }
 
 // ErrorWithDetail function used to return error message with detail
-func NewError(code int, args ...interface{}) *errorKit {
+func NewError(code int, err error, args ...interface{}) *errorKit {
 	result := &errorKit{
-		ID:   uuid.New().String(),
-		Code: code,
+		ID:       uuid.New().String(),
+		Code:     code,
+		RawError: err,
 	}
 	// apply the arguments
 	for _, arg := range args {
@@ -49,5 +51,5 @@ func CastError(err error) *errorKit {
 		return e
 	}
 
-	return NewError(0, err.Error())
+	return NewError(0, err, err.Error())
 }
