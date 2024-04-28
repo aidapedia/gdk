@@ -9,11 +9,12 @@ type ErrorDetail string
 
 // errorKit type represent the error message
 type errorKit struct {
-	ID       string      `json:"id,omitempty"`
-	Code     int         `json:"code"`
-	Message  string      `json:"message"`
-	Detail   ErrorDetail `json:"details,omitempty"`
-	RawError error       `json:"error"`
+	ID         string      `json:"id,omitempty"`
+	Code       int         `json:"code"`
+	Message    string      `json:"message"`
+	Detail     ErrorDetail `json:"details,omitempty"`
+	RawRequest interface{} `json:"raw_request,omitempty"`
+	RawError   error       `json:"error"`
 }
 
 // Error function used to return error message
@@ -39,6 +40,12 @@ func NewError(code int, err error, args ...interface{}) *errorKit {
 	}
 
 	return result
+}
+
+// WithRequest function used to add request to error
+func WithRequest(err *errorKit, request interface{}) *errorKit {
+	err.RawRequest = request
+	return err
 }
 
 // CastError function used to convert error to errorKit
