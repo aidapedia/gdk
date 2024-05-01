@@ -1,6 +1,8 @@
 package mask
 
 import (
+	"reflect"
+
 	masker "github.com/ggwhite/go-masker/v2"
 )
 
@@ -8,7 +10,12 @@ type Mask struct {
 	*masker.MaskerMarshaler
 }
 
-func New() *Mask {
+type Maskers struct {
+	Type masker.MaskerType
+	Mask masker.Masker
+}
+
+func New(maskers ...Maskers) *Mask {
 	mask := &Mask{}
 	// Default maskers are:
 	//   - NoneMasker
@@ -22,10 +29,42 @@ func New() *Mask {
 	//   - CreditMasker
 	//   - URLMasker
 	mask.MaskerMarshaler = masker.NewMaskerMarshaler()
+	for _, m := range maskers {
+		mask.Register(m.Type, m.Mask)
+	}
 	return mask
 }
 
 // Mask all struct fields
 func (m *Mask) MaskStruct(val interface{}) (interface{}, error) {
 	return m.Struct(val)
+}
+
+// Mask all map values
+func (m *Mask) MaskMap(val map[string]interface{}) (map[string]interface{}, error) {
+	for k, v := range val {
+		// if type struct or map[string]interface{}
+		// then call MaskStruct or MaskMap
+		switch v.(type) {
+		case map[string]interface{}:
+			val[k], _ = m.MaskMap(v.(map[string]interface{}))
+			continue
+		case interface{}:
+			typ := reflect.ValueOf(v).Kind()
+			if typ == reflect.Struct {
+				maskVal, err := m.MaskStruct(v)
+				if err != nil {
+					return nil, err
+				}
+				val[k] = maskVal
+				continue
+			}
+		}
+		mask, err := m.Get(masker.MaskerType(k))
+		if err != nil {
+			continue
+		}
+		val[k] = mask.Marshal("*", v.(string))
+	}
+	return val, nil
 }
