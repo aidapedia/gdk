@@ -1,62 +1,75 @@
 package error
 
 import (
-	"github.com/google/uuid"
+	"github.com/go-errors/errors"
 )
 
 // ErrorDetail type represent the error detail
 type ErrorDetail string
 
-// errorKit type represent the error message
-type errorKit struct {
-	ID         string      `json:"id,omitempty"`
-	Code       int         `json:"code"`
-	Message    string      `json:"message"`
-	Detail     ErrorDetail `json:"details,omitempty"`
-	RawRequest interface{} `json:"raw_request,omitempty"`
-	RawError   error       `json:"error"`
+// Error type represent the error message
+type Error struct {
+	code    int
+	details ErrorDetail
+	param   interface{}
+	// Fork from go-errors/errors
+	err *errors.Error
 }
 
 // Error function used to return error message
-func (e errorKit) Error() string {
-	return e.RawError.Error()
+func (e Error) Error() string {
+	return e.err.Error()
 }
 
-// ErrorWithDetail function used to return error message with detail
-func NewError(code int, err error, args ...interface{}) *errorKit {
-	result := &errorKit{
-		ID:       uuid.New().String(),
-		Code:     code,
-		RawError: err,
+// New function used to create new error message
+func New(code int, args ...interface{}) *Error {
+	result := &Error{
+		code: code,
 	}
 	// apply the arguments
 	for _, arg := range args {
 		switch arg := arg.(type) {
 		case ErrorDetail:
-			result.Detail = arg
+			result.details = arg
+		case error:
 		case string:
-			result.Message = arg
+			result.err = errors.New(arg)
 		}
 	}
-
 	return result
 }
 
-// WithRequest function used to add request to error
-func WithRequest(err *errorKit, request interface{}) *errorKit {
-	err.RawRequest = request
-	return err
+// Return the wrapped error (implements api for As function).
+func (e *Error) GetError() *errors.Error {
+	return e.err
 }
 
-// CastError function used to convert error to errorKit
-func CastError(err error) *errorKit {
-	if err == nil {
-		return nil
-	}
+// SetParam function used to add request to error
+func (e *Error) SetParam(request interface{}) {
+	e.param = request
+}
 
-	if e, ok := err.(*errorKit); ok {
-		return e
-	}
+// GetParam function used to get request from error
+func (e Error) GetParam() interface{} {
+	return e.param
+}
 
-	return NewError(0, err, err.Error())
+// SetCode function used to set error code
+func (e *Error) SetCode(code int) {
+	e.code = code
+}
+
+// GetCode function used to get error code
+func (e Error) GetCode() int {
+	return e.code
+}
+
+// SetDetails function used to set error details
+func (e *Error) SetDetails(details ErrorDetail) {
+	e.details = details
+}
+
+// GetDetails function used to get error details
+func (e Error) GetDetails() string {
+	return string(e.details)
 }

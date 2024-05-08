@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/ggwhite/go-masker/v2 v2.0.0
+	github.com/go-errors/errors v1.5.1
 	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.16.0
 	go.opentelemetry.io/otel v1.11.2
