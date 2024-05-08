@@ -27,9 +27,19 @@ type FileConfig struct {
 	Compress     bool   `json:"compress"`
 }
 
-func New(cfg *Config) *Logger {
-	if cfg == nil {
-		log.Fatalf("failed to init logger: %s", "config is nil")
+func (cfg Config) Build() *Logger {
+	if !cfg.File.Enable {
+		config := zap.NewProductionConfig()
+		if !cfg.StackTrace {
+			config.DisableStacktrace = true
+		}
+		logger, err := config.Build()
+		if err != nil {
+			log.Fatalf("failed to init logger: %s", err)
+		}
+		return &Logger{
+			log: logger,
+		}
 	}
 
 	opt := []zap.Option{
@@ -39,15 +49,6 @@ func New(cfg *Config) *Logger {
 		opt = append(opt, zap.AddStacktrace(setLogLevel(cfg.Level)))
 	}
 
-	if !cfg.File.Enable {
-		logger, err := zap.NewProduction(opt...)
-		if err != nil {
-			log.Fatalf("failed to init logger: %s", err)
-		}
-		return &Logger{
-			log: logger,
-		}
-	}
 	logger := &lumberjack.Logger{
 		Filename:   cfg.File.FileLocation,
 		MaxSize:    cfg.File.MaxSize,
@@ -68,6 +69,13 @@ func New(cfg *Config) *Logger {
 	return &Logger{
 		log: zap.New(core, opt...),
 	}
+}
+
+func New(cfg *Config) *Logger {
+	if cfg == nil {
+		log.Fatalf("failed to init logger: %s", "config is nil")
+	}
+	return cfg.Build()
 }
 
 // Sync flushes any buffered log entries.
