@@ -16,6 +16,7 @@ type Config struct {
 	File       FileConfig  `json:"enable_file"`
 	Level      LoggerLevel `json:"level"`
 	StackTrace bool        `json:"stack_trace"`
+	Caller     bool        `json:"caller"`
 }
 
 type FileConfig struct {
@@ -33,6 +34,9 @@ func (cfg Config) Build() *Logger {
 		if !cfg.StackTrace {
 			config.DisableStacktrace = true
 		}
+		if !cfg.Caller {
+			config.DisableCaller = true
+		}
 		logger, err := config.Build()
 		if err != nil {
 			log.Fatalf("failed to init logger: %s", err)
@@ -42,8 +46,9 @@ func (cfg Config) Build() *Logger {
 		}
 	}
 
-	opt := []zap.Option{
-		zap.AddCaller(),
+	opt := []zap.Option{}
+	if cfg.Caller {
+		opt = append(opt, zap.AddCaller())
 	}
 	if cfg.StackTrace {
 		opt = append(opt, zap.AddStacktrace(setLogLevel(cfg.Level)))
