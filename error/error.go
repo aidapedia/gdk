@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	goerrors "github.com/go-errors/errors"
+	"github.com/google/uuid"
 )
 
 // UserMessage type represent the error detail for user
@@ -13,8 +14,8 @@ type Code int
 
 // Error type represent the error message
 type Error struct {
-	// requestID represent the code of error, this help to identify the error
-	requestID string
+	// id represent the code of error, this help to identify the error
+	id string
 	// code represent the error code, can be used to http error, grpc error, etc
 	code Code
 	// userMessage represent the error userMessage message that can be reader by user
@@ -30,7 +31,9 @@ type Error struct {
 
 // New function used to create new error message
 func New(args ...interface{}) *Error {
-	result := &Error{}
+	result := &Error{
+		id: uuid.New().String(),
+	}
 	// apply the arguments
 	for _, arg := range args {
 		switch arg := arg.(type) {
@@ -97,10 +100,10 @@ func (e Error) GetUserMessage() string {
 	return string(e.userMessage)
 }
 
-func (e Error) GetRequestID() string {
-	return e.requestID
+func (e Error) GetID() string {
+	return e.id
 }
 
-func (e *Error) SetRequestID(requestID string) {
-	e.requestID = requestID
+func (e *Error) SetID(requestID string) {
+	e.id = requestID
 }
