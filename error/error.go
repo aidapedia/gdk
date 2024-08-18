@@ -13,6 +13,8 @@ type Code int
 
 // Error type represent the error message
 type Error struct {
+	// requestID represent the code of error, this help to identify the error
+	requestID string
 	// code represent the error code, can be used to http error, grpc error, etc
 	code Code
 	// userMessage represent the error userMessage message that can be reader by user
@@ -93,4 +95,12 @@ func (e *Error) SetUserMessage(details UserMessage) {
 // GetUserMessage function used to get user message
 func (e Error) GetUserMessage() string {
 	return string(e.userMessage)
+}
+
+func (e Error) GetRequestID() string {
+	return e.requestID
+}
+
+func (e *Error) SetRequestID(requestID string) {
+	e.requestID = requestID
 }
