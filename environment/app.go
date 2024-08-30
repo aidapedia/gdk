@@ -5,7 +5,7 @@ import (
 )
 
 func GetAppEnvironment() string {
-	if env := os.Getenv("app_env"); env != "" {
+	if env := os.Getenv("APP_ENV"); env != "" {
 		return env
 	}
 	return Development
