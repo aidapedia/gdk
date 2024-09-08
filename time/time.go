@@ -107,7 +107,3 @@ func AddBusinessDays(startDate time.Time, daysToAdd int) time.Time {
 	}
 	return currentDate
 }
-
-func NumberMonthInRange(start, end time.Time) int {
-	return int(end.Month() - start.Month())
-}

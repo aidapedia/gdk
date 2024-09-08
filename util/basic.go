@@ -17,6 +17,8 @@ func ToStr(v interface{}) string {
 		return v
 	case int:
 		return strconv.Itoa(v)
+	case int8:
+		return strconv.FormatInt(int64(v), 10)
 	case int32:
 		return strconv.Itoa(int(v))
 	case int64:
@@ -67,6 +69,8 @@ func ToInt(v interface{}) int {
 		return result
 	case int:
 		return v
+	case int8:
+		return int(v)
 	case int32:
 		return int(v)
 	case int64:
@@ -104,6 +108,8 @@ func ToInt64(v interface{}) int64 {
 		}
 		return int64(result)
 	case int:
+		return int64(v)
+	case int8:
 		return int64(v)
 	case int32:
 		return int64(v)
@@ -143,6 +149,8 @@ func ToInt8(v interface{}) int8 {
 		return int8(result)
 	case int:
 		return int8(v)
+	case int8:
+		return v
 	case int32:
 		return int8(v)
 	case int64:
@@ -179,6 +187,8 @@ func ToInt32(v interface{}) int32 {
 		return int32(result)
 	case int:
 		return int32(v)
+	case int8:
+		return int32(v)
 	case int32:
 		return v
 	case int64:
@@ -214,6 +224,8 @@ func ToFloat64(v interface{}) float64 {
 		}
 		return result
 	case int:
+		return float64(v)
+	case int8:
 		return float64(v)
 	case int32:
 		return float64(v)
