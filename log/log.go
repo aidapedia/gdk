@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	"go.uber.org/zap"
@@ -96,9 +98,27 @@ func (l *Logger) Info(msg string, fields ...zap.Field) {
 	l.log.Info(msg, fields...)
 }
 
+// InfoCtx logs a message at level Info with log id.
+func (l *Logger) InfoCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	logID := ctx.Value(ContextKeyLogID)
+	if logID != nil {
+		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+	}
+	l.log.Info(msg, fields...)
+}
+
 // Debug logs a message at level Debug.
 func (l *Logger) Debug(msg string, fields ...zap.Field) {
 	l.log.Debug(msg, fields...)
+}
+
+// DebugCtx logs a message at level Debug with log id.
+func (l *Logger) DebugCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	logID := ctx.Value(ContextKeyLogID)
+	if logID != nil {
+		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+	}
+	l.log.Info(msg, fields...)
 }
 
 // Warn logs a message at level Warn.
@@ -106,8 +126,26 @@ func (l *Logger) Warn(msg string, fields ...zap.Field) {
 	l.log.Warn(msg, fields...)
 }
 
+// WarnCtx logs a message at level Warn with log id.
+func (l *Logger) WarnCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	logID := ctx.Value(ContextKeyLogID)
+	if logID != nil {
+		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+	}
+	l.log.Info(msg, fields...)
+}
+
 // Error logs a message at level Error.
 func (l *Logger) Error(msg string, fields ...zap.Field) {
+	l.log.Error(msg, fields...)
+}
+
+// ErrorCtx logs a message at level Error with log id.
+func (l *Logger) ErrorCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	logID := ctx.Value(ContextKeyLogID)
+	if logID != nil {
+		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+	}
 	l.log.Error(msg, fields...)
 }
 
