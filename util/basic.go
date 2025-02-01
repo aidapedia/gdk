@@ -253,28 +253,6 @@ func ToFloat64(v interface{}) float64 {
 	}
 }
 
-// ToArrayString converts any value to []string
-func ToArrayString(v interface{}) []string {
-	switch v := v.(type) {
-	case []interface{}:
-		var result []string
-		for _, val := range v {
-			result = append(result, ToStr(val))
-		}
-		return result
-	case []int64:
-		var result []string
-		for _, val := range v {
-			result = append(result, strconv.FormatInt(val, 10))
-		}
-		return result
-	case []string:
-		return v
-	default:
-		return []string{}
-	}
-}
-
 func ToTime(v interface{}) time.Time {
 	switch v := v.(type) {
 	case string:
