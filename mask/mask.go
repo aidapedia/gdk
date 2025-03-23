@@ -15,7 +15,21 @@ type Maskers struct {
 	Mask masker.Masker
 }
 
-func New(maskers ...Maskers) *Mask {
+func New(opts ...Option) *Mask {
+	mask := &Mask{}
+	mask.MaskerMarshaler = masker.NewMaskerMarshaler()
+	list := mask.List()
+	for _, v := range list {
+		mask.Unregister(v)
+	}
+	mask.Register(masker.MaskerTypeNone, &masker.NoneMasker{})
+	for _, opt := range opts {
+		opt.Apply(mask)
+	}
+	return mask
+}
+
+func NewDefault(opts ...Option) *Mask {
 	mask := &Mask{}
 	// Default maskers are:
 	//   - NoneMasker
@@ -29,8 +43,8 @@ func New(maskers ...Maskers) *Mask {
 	//   - CreditMasker
 	//   - URLMasker
 	mask.MaskerMarshaler = masker.NewMaskerMarshaler()
-	for _, m := range maskers {
-		mask.Register(m.Type, m.Mask)
+	for _, opt := range opts {
+		opt.Apply(mask)
 	}
 	return mask
 }
