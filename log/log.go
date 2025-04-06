@@ -10,8 +10,10 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+var Log *Logger
+
 type Logger struct {
-	log *zap.Logger
+	*zap.Logger
 }
 
 type Config struct {
@@ -44,7 +46,7 @@ func (cfg Config) Build() *Logger {
 			log.Fatalf("failed to init logger: %s", err)
 		}
 		return &Logger{
-			log: logger,
+			Logger: logger,
 		}
 	}
 
@@ -74,79 +76,59 @@ func (cfg Config) Build() *Logger {
 		setLogLevel(cfg.Level),
 	)
 	return &Logger{
-		log: zap.New(core, opt...),
+		Logger: zap.New(core, opt...),
 	}
 }
 
-func New(cfg *Config) *Logger {
+func New(cfg *Config) {
 	if cfg == nil {
 		log.Fatalf("failed to init logger: %s", "config is nil")
 	}
-	return cfg.Build()
+	Log = cfg.Build()
 }
 
 // Sync flushes any buffered log entries.
-func (l *Logger) Sync() error {
-	if l.log == nil {
+func Sync() error {
+	if Log == nil {
 		return nil
 	}
-	return l.log.Sync()
-}
-
-// Info logs a message at level Info.
-func (l *Logger) Info(msg string, fields ...zap.Field) {
-	l.log.Info(msg, fields...)
+	return Log.Sync()
 }
 
 // InfoCtx logs a message at level Info with log id.
-func (l *Logger) InfoCtx(ctx context.Context, msg string, fields ...zap.Field) {
+func InfoCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	logID := ctx.Value(ContextKeyLogID)
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
-	l.log.Info(msg, fields...)
-}
-
-// Debug logs a message at level Debug.
-func (l *Logger) Debug(msg string, fields ...zap.Field) {
-	l.log.Debug(msg, fields...)
+	Log.Info(msg, fields...)
 }
 
 // DebugCtx logs a message at level Debug with log id.
-func (l *Logger) DebugCtx(ctx context.Context, msg string, fields ...zap.Field) {
+func DebugCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	logID := ctx.Value(ContextKeyLogID)
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
-	l.log.Info(msg, fields...)
-}
-
-// Warn logs a message at level Warn.
-func (l *Logger) Warn(msg string, fields ...zap.Field) {
-	l.log.Warn(msg, fields...)
+	Log.Debug(msg, fields...)
 }
 
 // WarnCtx logs a message at level Warn with log id.
-func (l *Logger) WarnCtx(ctx context.Context, msg string, fields ...zap.Field) {
+func WarnCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	logID := ctx.Value(ContextKeyLogID)
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
-	l.log.Info(msg, fields...)
-}
-
-// Error logs a message at level Error.
-func (l *Logger) Error(msg string, fields ...zap.Field) {
-	l.log.Error(msg, fields...)
+	Log.Warn(msg, fields...)
 }
 
 // ErrorCtx logs a message at level Error with log id.
-func (l *Logger) ErrorCtx(ctx context.Context, msg string, fields ...zap.Field) {
+func ErrorCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	logID := ctx.Value(ContextKeyLogID)
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
-	l.log.Error(msg, fields...)
+	Log.Error(msg, fields...)
 }
 
 func setLogLevel(level LoggerLevel) zapcore.Level {
