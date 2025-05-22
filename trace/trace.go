@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	env "github.com/aidapedia/devkit/environment"
+	env "github.com/aidapedia/gdk/environment"
 )
 
 // Span is a struct to handle span

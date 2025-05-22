@@ -1,4 +1,4 @@
-module github.com/aidapedia/devkit
+module github.com/aidapedia/gdk
 
 go 1.19
 

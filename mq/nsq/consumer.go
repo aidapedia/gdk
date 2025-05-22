@@ -1,12 +1,11 @@
 package nsq
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/aidapedia/devkit/mq/nsq/middleware"
+	"github.com/aidapedia/gdk/mq/nsq/middleware"
 	nsq "github.com/nsqio/go-nsq"
 )
 
@@ -37,7 +36,7 @@ func (q *Consumer) AddConsumer(consumers []ConsumerConfig) error {
 	for _, c := range consumers {
 		consumer, err := nsq.NewConsumer(c.Topic, c.Channel, nsq.NewConfig())
 		if err != nil {
-			return fmt.Errorf("create consumer failed with topic: %s, err:%v", c.Topic, err)
+			return err
 		}
 		if c.Concurrent == 0 {
 			c.Concurrent = 1

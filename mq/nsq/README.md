@@ -12,8 +12,8 @@ Example:
 package main
 
 import (
-    "github.com/aidapedia/devkit/mq/nsq/middleware"
-    "github.com/aidapedia/devkit/mq/nsq"
+    "github.com/aidapedia/gdk/mq/nsq/middleware"
+    "github.com/aidapedia/gdk/mq/nsq"
 )
 
 func main() {
@@ -55,8 +55,8 @@ You can add middleware to the consumer. Middleware is a function that will be ex
 package main
 
 import (
-    "github.com/aidapedia/devkit/mq/nsq/middleware"
-    "github.com/aidapedia/devkit/mq/nsq"
+    "github.com/aidapedia/gdk/mq/nsq/middleware"
+    "github.com/aidapedia/gdk/mq/nsq"
 )
 func main() {
     // ... existing code
@@ -80,8 +80,8 @@ Example:
 package main
 
 import (
-    "github.com/aidapedia/devkit/mq/nsq/middleware"
-    "github.com/aidapedia/devkit/mq/nsq"
+    "github.com/aidapedia/gdk/mq/nsq/middleware"
+    "github.com/aidapedia/gdk/mq/nsq"
 )
 func main() {
     //... existing code
@@ -107,7 +107,7 @@ Example:
 ```go
 package main
 import (
-    "github.com/aidapedia/devkit/mq/nsq"
+    "github.com/aidapedia/gdk/mq/nsq"
 )
 func main() {
     // new producer
