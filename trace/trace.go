@@ -73,9 +73,9 @@ func StartSpanFromContext(ctx context.Context, operation string) (Span, context.
 }
 
 // Finish finish the span
-func (s *Span) Finish(errors *error) {
+func (s *Span) Finish(errors error) {
 	var message string
-	err := *errors
+	err := errors
 	status := codes.Ok
 	if err != nil {
 		s.span.RecordError(err, trace.WithStackTrace(true))
