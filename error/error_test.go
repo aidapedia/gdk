@@ -11,7 +11,7 @@ func TestCaller(t *testing.T) {
 }
 
 func UseError() error {
-	return New()
+	return New("abc")
 }
 
 func UseErrorV2() error {

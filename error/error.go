@@ -17,9 +17,23 @@ type Error struct {
 }
 
 // New function used to create new error
-func New() *Error {
+func New(message string) *Error {
 	error := &Error{
 		metadata: make(map[string]interface{}),
+		message:  message,
+	}
+	_, file, line, ok := runtime.Caller(1)
+	if ok {
+		error.caller = fmt.Sprintf("%s:%d", file, line)
+	}
+	return error
+}
+
+// NewWithMetadata function used to create new error with metadata
+func NewWithMetadata(message string, metadata map[string]interface{}) *Error {
+	error := &Error{
+		metadata: metadata,
+		message:  message,
 	}
 	_, file, line, ok := runtime.Caller(1)
 	if ok {
