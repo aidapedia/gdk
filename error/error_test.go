@@ -1,6 +1,7 @@
 package error
 
 import (
+	"errors"
 	"log"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestCaller(t *testing.T) {
 }
 
 func UseError() error {
-	return New("abc")
+	return New(errors.New("abc"))
 }
 
 func UseErrorV2() error {
