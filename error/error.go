@@ -17,29 +17,54 @@ type Error struct {
 }
 
 // New function used to create new error
-func New(message string) *Error {
-	error := &Error{
-		metadata: make(map[string]interface{}),
-		message:  message,
+func New(err error) *Error {
+	ers, ok := err.(*Error)
+	if !ok {
+		error := &Error{
+			metadata: make(map[string]interface{}),
+			message:  err.Error(),
+		}
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			error.caller = fmt.Sprintf("%s:%d", file, line)
+		}
+		return error
 	}
-	_, file, line, ok := runtime.Caller(1)
-	if ok {
-		error.caller = fmt.Sprintf("%s:%d", file, line)
+	if ers.Caller() == "" {
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			ers.caller = fmt.Sprintf("%s:%d", file, line)
+		}
 	}
-	return error
+	return ers
 }
 
 // NewWithMetadata function used to create new error with metadata
-func NewWithMetadata(message string, metadata map[string]interface{}) *Error {
-	error := &Error{
-		metadata: metadata,
-		message:  message,
+func NewWithMetadata(err error, metadata map[string]interface{}) *Error {
+	ers, ok := err.(*Error)
+	if !ok {
+		error := &Error{
+			metadata: metadata,
+			message:  err.Error(),
+		}
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			error.caller = fmt.Sprintf("%s:%d", file, line)
+		}
+		return error
 	}
-	_, file, line, ok := runtime.Caller(1)
-	if ok {
-		error.caller = fmt.Sprintf("%s:%d", file, line)
+	// Apply metadata
+	for i := range metadata {
+		ers.SetMetadata(i, metadata[i])
 	}
-	return error
+	// Aplly Caller
+	if ers.Caller() == "" {
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			ers.caller = fmt.Sprintf("%s:%d", file, line)
+		}
+	}
+	return ers
 }
 
 // Error function used to return error message

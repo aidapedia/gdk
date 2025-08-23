@@ -14,13 +14,15 @@ var Log *Logger
 
 type Logger struct {
 	*zap.Logger
+	hookLogID func()
 }
 
 type Config struct {
-	File       FileConfig  `json:"enable_file"`
-	Level      LoggerLevel `json:"level"`
-	StackTrace bool        `json:"stack_trace"`
-	Caller     bool        `json:"caller"`
+	File   FileConfig  `json:"enable_file"`
+	Level  LoggerLevel `json:"level"`
+	Caller bool        `json:"caller"`
+	// HookLogID is a function handler when Log ID not found
+	HookLogID func()
 }
 
 type FileConfig struct {
@@ -32,12 +34,9 @@ type FileConfig struct {
 	Compress     bool   `json:"compress"`
 }
 
-func (cfg Config) Build() *Logger {
+func (cfg Config) build() *Logger {
 	if !cfg.File.Enable {
 		config := zap.NewProductionConfig()
-		if !cfg.StackTrace {
-			config.DisableStacktrace = true
-		}
 		if !cfg.Caller {
 			config.DisableCaller = true
 		}
@@ -53,9 +52,6 @@ func (cfg Config) Build() *Logger {
 	opt := []zap.Option{}
 	if cfg.Caller {
 		opt = append(opt, zap.AddCaller())
-	}
-	if cfg.StackTrace {
-		opt = append(opt, zap.AddStacktrace(setLogLevel(cfg.Level)))
 	}
 
 	logger := &lumberjack.Logger{
@@ -76,7 +72,8 @@ func (cfg Config) Build() *Logger {
 		setLogLevel(cfg.Level),
 	)
 	return &Logger{
-		Logger: zap.New(core, opt...),
+		Logger:    zap.New(core, opt...),
+		hookLogID: cfg.HookLogID,
 	}
 }
 
@@ -84,7 +81,7 @@ func New(cfg *Config) {
 	if cfg == nil {
 		log.Fatalf("failed to init logger: %s", "config is nil")
 	}
-	Log = cfg.Build()
+	Log = cfg.build()
 }
 
 // Sync flushes any buffered log entries.
@@ -97,37 +94,25 @@ func Sync() error {
 
 // InfoCtx logs a message at level Info with log id.
 func InfoCtx(ctx context.Context, msg string, fields ...zap.Field) {
-	logID := ctx.Value(ContextKeyLogID)
-	if logID != nil {
-		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
-	}
+	fields = append(fields, fieldCheck(ctx)...)
 	Log.Info(msg, fields...)
 }
 
 // DebugCtx logs a message at level Debug with log id.
 func DebugCtx(ctx context.Context, msg string, fields ...zap.Field) {
-	logID := ctx.Value(ContextKeyLogID)
-	if logID != nil {
-		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
-	}
+	fields = append(fields, fieldCheck(ctx)...)
 	Log.Debug(msg, fields...)
 }
 
 // WarnCtx logs a message at level Warn with log id.
 func WarnCtx(ctx context.Context, msg string, fields ...zap.Field) {
-	logID := ctx.Value(ContextKeyLogID)
-	if logID != nil {
-		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
-	}
+	fields = append(fields, fieldCheck(ctx)...)
 	Log.Warn(msg, fields...)
 }
 
 // ErrorCtx logs a message at level Error with log id.
 func ErrorCtx(ctx context.Context, msg string, fields ...zap.Field) {
-	logID := ctx.Value(ContextKeyLogID)
-	if logID != nil {
-		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
-	}
+	fields = append(fields, fieldCheck(ctx)...)
 	Log.Error(msg, fields...)
 }
 
@@ -144,4 +129,16 @@ func setLogLevel(level LoggerLevel) zapcore.Level {
 	default:
 		return zapcore.InfoLevel
 	}
+}
+
+func fieldCheck(ctx context.Context) []zap.Field {
+	var fields = make([]zap.Field, 0)
+	logID := ctx.Value(ContextKeyLogID)
+	if logID != nil {
+		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+	}
+	if Log.hookLogID != nil {
+		Log.hookLogID()
+	}
+	return fields
 }
