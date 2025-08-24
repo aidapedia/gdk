@@ -14,7 +14,8 @@ var Log *Logger
 
 type Logger struct {
 	*zap.Logger
-	hookLogID func()
+	hookLogID   func()
+	defaultTags map[string]interface{}
 }
 
 type Config struct {
@@ -22,7 +23,8 @@ type Config struct {
 	Level  LoggerLevel `json:"level"`
 	Caller bool        `json:"caller"`
 	// HookLogID is a function handler when Log ID not found
-	HookLogID func()
+	HookLogID   func()
+	DefaultTags map[string]interface{}
 }
 
 type FileConfig struct {
@@ -45,7 +47,9 @@ func (cfg Config) build() *Logger {
 			log.Fatalf("failed to init logger: %s", err)
 		}
 		return &Logger{
-			Logger: logger,
+			Logger:      logger,
+			hookLogID:   cfg.HookLogID,
+			defaultTags: cfg.DefaultTags,
 		}
 	}
 
@@ -72,14 +76,15 @@ func (cfg Config) build() *Logger {
 		setLogLevel(cfg.Level),
 	)
 	return &Logger{
-		Logger:    zap.New(core, opt...),
-		hookLogID: cfg.HookLogID,
+		Logger:      zap.New(core, opt...),
+		hookLogID:   cfg.HookLogID,
+		defaultTags: cfg.DefaultTags,
 	}
 }
 
 func New(cfg *Config) {
 	if cfg == nil {
-		log.Fatalf("failed to init logger: %s", "config is nil")
+		panic("failed to init logger: config is nil")
 	}
 	Log = cfg.build()
 }
@@ -139,6 +144,10 @@ func fieldCheck(ctx context.Context) []zap.Field {
 	}
 	if Log.hookLogID != nil {
 		Log.hookLogID()
+	}
+	// insert all default tags
+	for k, v := range Log.defaultTags {
+		fields = append(fields, zap.Any(k, v))
 	}
 	return fields
 }
