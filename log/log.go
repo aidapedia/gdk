@@ -14,16 +14,13 @@ var Log *Logger
 
 type Logger struct {
 	*zap.Logger
-	hookLogID   func()
 	defaultTags map[string]interface{}
 }
 
 type Config struct {
-	File   FileConfig  `json:"enable_file"`
-	Level  LoggerLevel `json:"level"`
-	Caller bool        `json:"caller"`
-	// HookLogID is a function handler when Log ID not found
-	HookLogID   func()
+	File        FileConfig  `json:"enable_file"`
+	Level       LoggerLevel `json:"level"`
+	Caller      bool        `json:"caller"`
 	DefaultTags map[string]interface{}
 }
 
@@ -48,7 +45,6 @@ func (cfg Config) build() *Logger {
 		}
 		return &Logger{
 			Logger:      logger,
-			hookLogID:   cfg.HookLogID,
 			defaultTags: cfg.DefaultTags,
 		}
 	}
@@ -77,7 +73,6 @@ func (cfg Config) build() *Logger {
 	)
 	return &Logger{
 		Logger:      zap.New(core, opt...),
-		hookLogID:   cfg.HookLogID,
 		defaultTags: cfg.DefaultTags,
 	}
 }
@@ -142,10 +137,6 @@ func fieldCheck(ctx context.Context) []zap.Field {
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
-	if Log.hookLogID != nil {
-		Log.hookLogID()
-	}
-	// insert all default tags
 	for k, v := range Log.defaultTags {
 		fields = append(fields, zap.Any(k, v))
 	}
