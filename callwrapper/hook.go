@@ -4,10 +4,10 @@ import "context"
 
 type Hook struct {
 	// Hook that is called when success execution
-	OnSuccess func(ctx context.Context) error
+	BeforeHook func(ctx context.Context) map[string]interface{}
 
-	// Hook that is called when falure execution
-	OnFailure func(ctx context.Context) error
+	// Hook that is called when success execution
+	AfterHook func(ctx context.Context, param map[string]interface{})
 
 	// OnErrorLog is the hook that is called when error occurs
 	OnErrorLog func(ctx context.Context, msg string, err error)

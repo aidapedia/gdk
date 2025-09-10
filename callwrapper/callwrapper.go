@@ -3,11 +3,12 @@ package callwrapper
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/aidapedia/gdk/callwrapper/pkg/cache"
-	gdkLog "github.com/aidapedia/gdk/log"
 	"github.com/go-redis/redis/v8"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 )
@@ -67,13 +68,13 @@ func New(name string, opt Options) error {
 	// Hook default configuration.
 	if opt.Hook.OnErrorLog == nil {
 		opt.Hook.OnErrorLog = func(ctx context.Context, msg string, err error) {
-			gdkLog.ErrorCtx(ctx, msg, zap.Error(err))
+			log.Println(msg, zap.Error(err))
 		}
 	}
 
 	if opt.Hook.OnWarnLog == nil {
 		opt.Hook.OnWarnLog = func(ctx context.Context, msg string, err error) {
-			gdkLog.WarnCtx(ctx, msg, zap.Error(err))
+			log.Println(msg, zap.Error(err))
 		}
 	}
 
@@ -115,22 +116,9 @@ func (cw *CallWrapper) Call(ctx context.Context, key map[string]interface{}, fn 
 		}
 	}
 
+	hookParam := cw.opt.Hook.BeforeHook(ctx)
 	defer func() {
-		if err != nil {
-			if cw.opt.Hook.OnFailure != nil {
-				errHook := cw.opt.Hook.OnFailure(ctx)
-				if errHook != nil {
-					cw.opt.Hook.OnErrorLog(ctx, "failed to failure hook", errHook)
-				}
-			}
-		} else {
-			if cw.opt.Hook.OnSuccess != nil {
-				errHook := cw.opt.Hook.OnSuccess(ctx)
-				if errHook != nil {
-					cw.opt.Hook.OnErrorLog(ctx, "failed to success hook", errHook)
-				}
-			}
-		}
+		cw.opt.Hook.AfterHook(ctx, hookParam)
 		if cw.opt.Cache {
 			errCache := cw.cache.Set(ctx, keyStr, resp, cw.opt.CacheExpiration)
 			if errCache != nil {
@@ -145,7 +133,8 @@ func (cw *CallWrapper) Call(ctx context.Context, key map[string]interface{}, fn 
 		})
 		return resp, err
 	}
-	return fn(ctx)
+	resp, err = fn(ctx)
+	return resp, err
 }
 
 func generateKey(name string, key map[string]interface{}) string {
