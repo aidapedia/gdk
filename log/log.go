@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	gdkCtx "github.com/aidapedia/gdk/context"
 )
 
 var Log *Logger
@@ -133,7 +135,7 @@ func setLogLevel(level LoggerLevel) zapcore.Level {
 
 func fieldCheck(ctx context.Context) []zap.Field {
 	var fields = make([]zap.Field, 0)
-	logID := ctx.Value(ContextKeyLogID)
+	logID := ctx.Value(gdkCtx.ContextKeyLogID)
 	if logID != nil {
 		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
 	}
