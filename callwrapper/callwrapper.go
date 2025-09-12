@@ -19,7 +19,7 @@ import (
 var callWrappers = make(map[string]Interface)
 
 // CallFunc is the function that will be called.
-type callFunc = func(ctx context.Context) (interface{}, error)
+type callFunc = func() (interface{}, error)
 
 // Interface is the interface for the callwrapper.
 type Interface interface {
@@ -119,7 +119,7 @@ func (cw *CallWrapper) Call(ctx context.Context, key map[string]interface{}, fn 
 	hookParam := cw.opt.Hook.BeforeHook(ctx)
 	defer func() {
 		cw.opt.Hook.AfterHook(ctx, hookParam)
-		if cw.opt.Cache {
+		if cw.opt.Cache && err != nil {
 			errCache := cw.cache.Set(ctx, keyStr, resp, cw.opt.CacheExpiration)
 			if errCache != nil {
 				cw.opt.Hook.OnWarnLog(ctx, "failed to set cache", err)
@@ -129,11 +129,11 @@ func (cw *CallWrapper) Call(ctx context.Context, key map[string]interface{}, fn 
 
 	if cw.opt.Singleflight {
 		resp, err, _ = cw.sl.Do(keyStr, func() (interface{}, error) {
-			return fn(ctx)
+			return fn()
 		})
 		return resp, err
 	}
-	resp, err = fn(ctx)
+	resp, err = fn()
 	return resp, err
 }
 
