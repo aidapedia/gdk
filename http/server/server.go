@@ -14,10 +14,6 @@ import (
 // Server is a struct to handle server
 type Server struct {
 	app *fiber.App
-
-	// Default Middlewares for all routes
-	// This middlewares will be applied to all routes
-	middlewares []middleware.Middleware
 }
 
 // New creates a new server
@@ -63,6 +59,7 @@ func (s *Server) Listen(address string, config ...fiber.ListenConfig) error {
 	return s.app.Listen(address, config...)
 }
 
+// Shutdown shuts down the server
 func (s *Server) Shutdown() {
 	// Graceful Shutdown
 	c := make(chan os.Signal, 1)
@@ -74,6 +71,9 @@ func (s *Server) Shutdown() {
 	}()
 }
 
+// ListenGracefully starts the server with the given address and config
+// It will shutdown the server gracefully when os.Interrupt, syscall.SIGTERM, or syscall.SIGQUIT signal is received
+// It will return error if the server failed to start
 func (s *Server) ListenGracefully(address string, config ...fiber.ListenConfig) error {
 	s.Shutdown()
 	return s.Listen(address, config...)

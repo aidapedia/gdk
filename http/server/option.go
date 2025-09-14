@@ -6,6 +6,11 @@ type Option interface {
 	Apply(svc *Server)
 }
 
+// WithMiddlewares is the option that adds middlewares to the server.
+//
+// Example:
+//
+//	WithMiddlewares(middleware.WithRecover())
 func WithMiddlewares(middlewares ...middleware.Middleware) Option {
 	return &withMiddlewares{middlewares: middlewares}
 }
@@ -15,5 +20,7 @@ type withMiddlewares struct {
 }
 
 func (o *withMiddlewares) Apply(svc *Server) {
-	svc.middlewares = append(svc.middlewares, o.middlewares...)
+	for _, m := range o.middlewares {
+		svc.app.Use(m)
+	}
 }
