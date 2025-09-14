@@ -2,14 +2,16 @@ package log
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	gdkCtx "github.com/aidapedia/gdk/context"
+	"github.com/google/uuid"
 )
 
 var Log *Logger
@@ -137,10 +139,14 @@ func fieldCheck(ctx context.Context) []zap.Field {
 	var fields = make([]zap.Field, 0)
 	logID := ctx.Value(gdkCtx.ContextKeyLogID)
 	if logID != nil {
-		fields = append(fields, zap.String("log_id", fmt.Sprintf("%s", logID)))
+		fields = append(fields, zap.String(gdkCtx.ContextKeyLogID, GenerateLogID()))
 	}
 	for k, v := range Log.defaultTags {
 		fields = append(fields, zap.Any(k, v))
 	}
 	return fields
+}
+
+func GenerateLogID() string {
+	return time.Now().Format("20060102150405") + strings.ReplaceAll(uuid.NewString(), "-", "")
 }
