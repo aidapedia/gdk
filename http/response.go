@@ -29,6 +29,9 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 	err, ok := val.(*gerr.Error)
 	if ok && err != nil {
 		msg := err.GetMetadata(ErrorMetadataUserMessage).(string)
+		if msg == "" {
+			msg = err.Error()
+		}
 		c.Status(err.GetMetadata(ErrorMetadataCode).(int)).JSON(&fiber.Map{
 			"success": false,
 			"message": msg,

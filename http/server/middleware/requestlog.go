@@ -63,7 +63,6 @@ func WithRequestLog() Middleware {
 			return nil
 		}
 		log.InfoCtx(c.Context(), "Incoming HTTP Request", request...)
-
 		return nil
 	}
 }
