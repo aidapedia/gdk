@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -180,11 +181,11 @@ func ToInt32(v interface{}) int32 {
 	switch v := v.(type) {
 	case string:
 		str := strings.TrimSpace(v)
-		result, err := strconv.Atoi(str)
+		parsed, err := strconv.ParseInt(str, 10, 32)
 		if err != nil {
 			return 0
 		}
-		return int32(result)
+		return int32(parsed)
 	case int:
 		return int32(v)
 	case int8:
@@ -198,11 +199,11 @@ func ToInt32(v interface{}) int32 {
 	case float64:
 		return int32(v)
 	case []byte:
-		result, err := strconv.Atoi(string(v))
+		parsed, err := strconv.ParseInt(string(v), 10, 32)
 		if err != nil {
 			return 0
 		}
-		return int32(result)
+		return int32(parsed)
 	case bool:
 		if v {
 			return 1
