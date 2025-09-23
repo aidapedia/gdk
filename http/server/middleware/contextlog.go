@@ -8,7 +8,7 @@ import (
 
 func WithContextLog() Middleware {
 	return func(c fiber.Ctx) error {
-		logID := c.Get(context.ContextKeyLogID)
+		logID := string(c.Request().Header.Peek(context.ContextKeyLogID))
 		if logID == "" {
 			logID = log.GenerateLogID()
 			c.Set(context.ContextKeyLogID, logID)
