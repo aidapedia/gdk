@@ -1,6 +1,6 @@
 
 <h1 align="center">
-  <img src="https://i.ibb.co.com/6JqpGxDd/Chat-GPT-Image-Sep-14-2025-11-01-41-PM.png" alt="Go Development Kit" width="200">
+  <img src="https://i.ibb.co.com/ccGMq8jp/Chat-GPT-Image-Sep-14-2025-11-01-41-PM.png" alt="Go Development Kit" width="200">
   <br>
   Go Development Kit
   <br>
