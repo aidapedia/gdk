@@ -26,6 +26,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -62,6 +63,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
