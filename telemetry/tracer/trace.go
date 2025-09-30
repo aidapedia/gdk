@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/credentials"
 
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -23,29 +22,19 @@ type Span struct {
 }
 
 func InitTracer(serviceName string, collectorURL string, isSecured bool) (*otlptrace.Exporter, error) {
-	secureOption := otlptracegrpc.WithInsecure()
-
-	isSecured = false
-	if isSecured { // TODO add tls and fix it later
-		secureOption = otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
-	}
-
+	// Using stdout exporter as a replacement for OTLP exporter
+	// This will output traces to stdout which can be redirected as needed
 	exporter, err := otlptrace.New(
 		context.Background(),
 		otlptracegrpc.NewClient(
-			secureOption,
+			otlptracegrpc.WithInsecure(),
 			otlptracegrpc.WithEndpoint(collectorURL),
 		),
 	)
-
-	if err != nil {
-		return nil, err
-	}
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
 			attribute.String("service", serviceName),
-			attribute.String("library.language", "go"),
 			attribute.String("library.language", "go"),
 			attribute.String("environment", env.Development),
 		),
