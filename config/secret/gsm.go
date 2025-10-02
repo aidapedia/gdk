@@ -1,4 +1,4 @@
-package vault
+package secret
 
 import (
 	"context"
@@ -10,7 +10,13 @@ import (
 )
 
 type GSM struct {
-	ProjectID string
+	projectID string
+}
+
+func NewSecretGSM(projectID string) *GSM {
+	return &GSM{
+		projectID: projectID,
+	}
 }
 
 func (v *GSM) GetSecret(ctx context.Context, target interface{}) error {
@@ -25,7 +31,7 @@ func (v *GSM) GetSecret(ctx context.Context, target interface{}) error {
 	defer client.Close()
 
 	resp, err := client.AccessSecretVersion(ctx, &secretmanagerpb.AccessSecretVersionRequest{
-		Name: fmt.Sprintf("projects/%s/secrets/domea/versions/latest", v.ProjectID),
+		Name: fmt.Sprintf("projects/%s/secrets/domea/versions/latest", v.projectID),
 	})
 	if err != nil {
 		return err
