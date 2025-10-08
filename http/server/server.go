@@ -78,3 +78,7 @@ func (s *Server) ListenGracefully(address string, config ...fiber.ListenConfig) 
 	s.Shutdown()
 	return s.Listen(address, config...)
 }
+
+func (s *Server) GetFiberApp() *fiber.App {
+	return s.app
+}
