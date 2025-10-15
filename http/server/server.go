@@ -1,12 +1,14 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/aidapedia/gdk/http/server/middleware"
+	"github.com/aidapedia/gdk/log"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 )
@@ -48,14 +50,12 @@ func NewWithDefaultConfig(opt ...Option) (*Server, error) {
 func (s *Server) Listen(address string, config ...fiber.ListenConfig) error {
 	if len(config) > 0 {
 		config[0].DisableStartupMessage = true
-		config[0].EnablePrefork = true
 	} else {
 		config = append(config, fiber.ListenConfig{
 			DisableStartupMessage: true,
-			EnablePrefork:         true,
 		})
 	}
-
+	log.InfoCtx(context.Background(), fmt.Sprintf("Server is successfully running on [%s]", address))
 	return s.app.Listen(address, config...)
 }
 

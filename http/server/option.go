@@ -1,6 +1,8 @@
 package server
 
-import "github.com/aidapedia/gdk/http/server/middleware"
+import (
+	"github.com/gofiber/fiber/v3"
+)
 
 type Option interface {
 	Apply(svc *Server)
@@ -11,12 +13,12 @@ type Option interface {
 // Example:
 //
 //	WithMiddlewares(middleware.WithRecover())
-func WithMiddlewares(middlewares ...middleware.Middleware) Option {
+func WithMiddlewares(middlewares ...fiber.Handler) Option {
 	return &withMiddlewares{middlewares: middlewares}
 }
 
 type withMiddlewares struct {
-	middlewares []middleware.Middleware
+	middlewares []fiber.Handler
 }
 
 func (o *withMiddlewares) Apply(svc *Server) {

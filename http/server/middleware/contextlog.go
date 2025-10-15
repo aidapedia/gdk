@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func WithContextLog() Middleware {
+func WithContextLog() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		logID := string(c.Request().Header.Peek(context.ContextKeyLogID))
 		if logID == "" {

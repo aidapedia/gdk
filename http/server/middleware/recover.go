@@ -7,7 +7,7 @@ import (
 )
 
 // WithRecover is the middleware that recovers from panics.
-func WithRecover() Middleware {
+func WithRecover() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		defer func() {
 			if r := recover(); r != nil {

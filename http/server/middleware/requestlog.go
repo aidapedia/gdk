@@ -15,7 +15,7 @@ import (
 // WithRequestLog is the middleware that logs the request.
 // If you want to masked your request. You can configure it by setting on log agent.
 // Some agent have feature like redaction rule to mask the request body.
-func WithRequestLog() Middleware {
+func WithRequestLog() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// Preparing Request Data
 		request := []zapcore.Field{
