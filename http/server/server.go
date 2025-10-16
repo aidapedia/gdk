@@ -37,13 +37,14 @@ func New(opt ...Option) (*Server, error) {
 // NewWithDefaultConfig creates a new server with default config
 // This config choosen by the author of the package
 func NewWithDefaultConfig(opt ...Option) (*Server, error) {
-	return New(
+	opt = append(opt,
 		WithMiddlewares(
 			middleware.WithContextLog(),
 			middleware.WithRecover(),
 			middleware.WithRequestLog(),
 		),
 	)
+	return New(opt...)
 }
 
 // Listen starts the server with the given address and config
