@@ -23,6 +23,6 @@ type withMiddlewares struct {
 
 func (o *withMiddlewares) Apply(svc *Server) {
 	for _, m := range o.middlewares {
-		svc.app.Use(m)
+		svc.App.Use(m)
 	}
 }

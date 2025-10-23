@@ -1,30 +1,35 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/aidapedia/gdk/http/server/middleware"
-	"github.com/aidapedia/gdk/log"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 )
 
 // Server is a struct to handle server
 type Server struct {
-	app *fiber.App
+	*fiber.App
 }
 
 // New creates a new server
-func New(opt ...Option) (*Server, error) {
+// Basically, it creates a new fiber app with the given config
+func New(serverName string, opt ...Option) (*Server, error) {
 	svc := &Server{
-		app: fiber.New(
+		App: fiber.New(
 			fiber.Config{
-				JSONEncoder: sonic.Marshal,
-				JSONDecoder: sonic.Unmarshal,
+				// We use static config right now
+				// TODO: Add dynamic config from config file. If needed default config use other function
+				JSONEncoder:   sonic.Marshal,
+				JSONDecoder:   sonic.Unmarshal,
+				ServerHeader:  serverName,
+				StrictRouting: true,
+				CaseSensitive: true,
+				Immutable:     true,
 			},
 		),
 	}
@@ -36,7 +41,7 @@ func New(opt ...Option) (*Server, error) {
 
 // NewWithDefaultConfig creates a new server with default config
 // This config choosen by the author of the package
-func NewWithDefaultConfig(opt ...Option) (*Server, error) {
+func NewWithDefaultConfig(serverName string, opt ...Option) (*Server, error) {
 	opt = append(opt,
 		WithMiddlewares(
 			middleware.WithContextLog(),
@@ -44,42 +49,36 @@ func NewWithDefaultConfig(opt ...Option) (*Server, error) {
 			middleware.WithRequestLog(),
 		),
 	)
-	return New(opt...)
+	return New(serverName, opt...)
 }
 
-// Listen starts the server with the given address and config
-func (s *Server) Listen(address string, config ...fiber.ListenConfig) error {
-	if len(config) > 0 {
-		config[0].DisableStartupMessage = true
-	} else {
-		config = append(config, fiber.ListenConfig{
-			DisableStartupMessage: true,
-		})
-	}
-	log.InfoCtx(context.Background(), fmt.Sprintf("Server is successfully running on [%s]", address))
-	return s.app.Listen(address, config...)
-}
-
-// Shutdown shuts down the server
-func (s *Server) Shutdown() {
+// shutdown shuts down the server
+func (s *Server) shutdown() {
 	// Graceful Shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-c
 		fmt.Println("Gracefully shutting down triggered")
-		s.app.Shutdown()
+		s.App.Shutdown()
 	}()
 }
 
-// ListenGracefully starts the server with the given address and config
+// Listen starts the server with the given address and config
 // It will shutdown the server gracefully when os.Interrupt, syscall.SIGTERM, or syscall.SIGQUIT signal is received
 // It will return error if the server failed to start
-func (s *Server) ListenGracefully(address string, config ...fiber.ListenConfig) error {
-	s.Shutdown()
-	return s.Listen(address, config...)
-}
-
-func (s *Server) GetFiberApp() *fiber.App {
-	return s.app
+func (s *Server) Listen(address string, config ...fiber.ListenConfig) error {
+	s.shutdown()
+	if len(config) > 0 {
+		config[0].EnablePrefork = true
+	} else {
+		config = append(config, fiber.ListenConfig{
+			EnablePrefork: true,
+		})
+	}
+	// Handle path not found
+	s.App.Use(func(c fiber.Ctx) error {
+		return c.SendStatus(404)
+	})
+	return s.App.Listen(address, config...)
 }
