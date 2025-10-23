@@ -148,5 +148,5 @@ func fieldCheck(ctx context.Context) []zap.Field {
 }
 
 func GenerateLogID() string {
-	return time.Now().Format("20060102150405") + strings.ReplaceAll(uuid.NewString(), "-", "")
+	return time.Now().Format("20060102") + strings.ReplaceAll(uuid.NewString(), "-", "")
 }
