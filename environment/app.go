@@ -10,3 +10,10 @@ func GetAppEnvironment() string {
 	}
 	return Development
 }
+
+func GetSecretGSMProjectID() string {
+	if projectID := os.Getenv("SECRET_GSM_PROJECT_ID"); projectID != "" {
+		return projectID
+	}
+	return ""
+}
