@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	gctx "github.com/aidapedia/gdk/context"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/client"
@@ -36,9 +37,10 @@ func New(opt ...Option) *Client {
 
 // Send sends a request to the server.
 // It sets the client and context to the request.
-func (c *Client) send(ctx context.Context, req *Request, resp interface{}) error {
+func (c *Client) Send(ctx context.Context, req *Request, resp interface{}) error {
 	// force set client to the request
 	req.SetClient(c.cli)
+	req.AddHeader(gctx.ContextKeyLogID, ctx.Value(gctx.ContextKeyLogID).(string))
 
 	// check rate limit
 	if c.ratelimiter != nil {
@@ -73,20 +75,20 @@ func (c *Client) send(ctx context.Context, req *Request, resp interface{}) error
 
 func (c *Client) Get(ctx context.Context, req *Request, resp interface{}) error {
 	req.SetMethod(fiber.MethodGet)
-	return c.send(ctx, req, resp)
+	return c.Send(ctx, req, resp)
 }
 
 func (c *Client) Post(ctx context.Context, req *Request, resp interface{}) error {
 	req.SetMethod(fiber.MethodPost)
-	return c.send(ctx, req, resp)
+	return c.Send(ctx, req, resp)
 }
 
 func (c *Client) Put(ctx context.Context, req *Request, resp interface{}) error {
 	req.SetMethod(fiber.MethodPut)
-	return c.send(ctx, req, resp)
+	return c.Send(ctx, req, resp)
 }
 
 func (c *Client) Delete(ctx context.Context, req *Request, resp interface{}) error {
 	req.SetMethod(fiber.MethodDelete)
-	return c.send(ctx, req, resp)
+	return c.Send(ctx, req, resp)
 }
