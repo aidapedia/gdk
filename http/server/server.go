@@ -69,13 +69,6 @@ func (s *Server) shutdown() {
 // It will return error if the server failed to start
 func (s *Server) Listen(address string, config ...fiber.ListenConfig) error {
 	s.shutdown()
-	if len(config) > 0 {
-		config[0].EnablePrefork = true
-	} else {
-		config = append(config, fiber.ListenConfig{
-			EnablePrefork: true,
-		})
-	}
 	// Handle path not found
 	s.App.Use(func(c fiber.Ctx) error {
 		return c.SendStatus(404)
