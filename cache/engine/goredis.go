@@ -4,18 +4,36 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/extra/redisotel/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 type GoRedisClient struct {
 	*redis.Client
 }
 
-func NewGoRedisClient(opt *redis.Options) (Interface, error) {
-	client := redis.NewClient(opt)
+type GoRedisClientOpt struct {
+	Opt               *redis.Options
+	TracingInstrument bool
+	MetricsInstrument bool
+}
+
+func NewGoRedisClient(opt GoRedisClientOpt) (Interface, error) {
+	client := redis.NewClient(opt.Opt)
 	err := client.Ping(context.Background()).Err()
 	if err != nil {
 		return nil, err
+	}
+
+	if opt.TracingInstrument {
+		if err := redisotel.InstrumentTracing(client); err != nil {
+			return nil, err
+		}
+	}
+	if opt.MetricsInstrument {
+		if err := redisotel.InstrumentMetrics(client); err != nil {
+			return nil, err
+		}
 	}
 
 	return &GoRedisClient{
