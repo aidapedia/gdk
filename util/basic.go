@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bytedance/sonic"
 )
 
 // ToStr converts any value to string.
@@ -32,7 +34,7 @@ func ToStr(v interface{}) string {
 	case []uint8:
 		return string(v)
 	default:
-		resultJSON, err := json.Marshal(v)
+		resultJSON, err := sonic.Marshal(v)
 		if err != nil {
 			return ""
 		}
@@ -243,7 +245,7 @@ func ToFloat64(v interface{}) float64 {
 		return result
 	case json.RawMessage:
 		var num float64
-		err := json.Unmarshal(v, &num)
+		err := sonic.Unmarshal(v, &num)
 		if err != nil {
 			return 0
 		}

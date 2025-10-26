@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	gdkErr "github.com/aidapedia/gdk/error"
 	"github.com/aidapedia/gdk/log"
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -30,7 +30,7 @@ func WithRequestLog() fiber.Handler {
 				if reqBodyByte == nil {
 					fmt.Println("Request Body is nil")
 				}
-				errx := json.Unmarshal(reqBodyByte, &reqBody)
+				errx := sonic.Unmarshal(reqBodyByte, &reqBody)
 				if errx != nil {
 					log.ErrorCtx(c.Context(), "Unmarshal Error", zap.Error(errx))
 				}
