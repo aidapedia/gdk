@@ -2,11 +2,11 @@ package secret
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"github.com/bytedance/sonic"
 )
 
 type GSM struct {
@@ -38,7 +38,7 @@ func (v *GSM) GetSecret(ctx context.Context, target interface{}) error {
 	}
 	byteCfg = resp.GetPayload().GetData()
 
-	err = json.Unmarshal(byteCfg, &target)
+	err = sonic.Unmarshal(byteCfg, &target)
 	if err != nil {
 		return err
 	}

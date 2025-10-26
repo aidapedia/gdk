@@ -17,3 +17,17 @@ func GetSecretGSMProjectID() string {
 	}
 	return ""
 }
+
+func GetSecretFilePath() string {
+	if path := os.Getenv("SECRET_FILE_PATH"); path != "" {
+		return path
+	}
+	return ""
+}
+
+func GetConfigPath() string {
+	if path := os.Getenv("CONFIG_FILE_PATH"); path != "" {
+		return path
+	}
+	return ""
+}
