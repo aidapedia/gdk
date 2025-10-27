@@ -66,23 +66,22 @@ func main() {
     // Ensure environment variable points to the directory with your config files.
     // e.g. os.Setenv("CONFIG_FILE_PATH", "./config")
 
-    cfg := &AppConfig{}
+    cfg := AppConfig{}
 
     // file names are specified WITHOUT extensions and must exist under CONFIG_FILE_PATH.
     // key is the top-level JSON key inside each file (e.g. "Config").
-    m := gdkconfig.NewManager(cfg, gdkconfig.SecretTypeFile, []string{"config", "app"}, "Config")
+    m := gdkconfig.NewManager(Option{
+				TargetStore: &cfg,
+				FileName:    []string{"config", "app"},
+				ConfigKey:   "AppConfig",
+			})
 
     if err := m.SetConfig(context.Background()); err != nil {
         panic(err)
     }
 
-    loaded, err := m.GetConfig(context.Background())
-    if err != nil {
-        panic(err)
-    }
-
-    // Use your loaded config
-    _ = loaded.(*AppConfig)
+    // Get your config imediately
+    _ = cfg
 }
 ```
 

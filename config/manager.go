@@ -60,6 +60,9 @@ func (o *Option) Validate() error {
 }
 
 func New(opt Option) *Manager {
+	if err := opt.Validate(); err != nil {
+		panic(err)
+	}
 	return &Manager{
 		store:       opt.TargetStore,
 		secretStore: opt.TargetSecret,
@@ -69,18 +72,7 @@ func New(opt Option) *Manager {
 	}
 }
 
-// GetConfig returns the config value store.
-func (m *Manager) GetConfig(ctx context.Context) (interface{}, error) {
-	if m.store == nil {
-		err := m.SetConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("store is not set")
-	}
-	return m.store, nil
-}
-
+// SetConfig sets the config value store.
 func (m *Manager) SetConfig(ctx context.Context) error {
 	s := viper.New()
 	path := environment.GetConfigPath()
@@ -100,18 +92,7 @@ func (m *Manager) SetConfig(ctx context.Context) error {
 	return nil
 }
 
-// GetSecret returns the secret value store.
-func (m *Manager) GetSecret(ctx context.Context) (interface{}, error) {
-	if m.secretStore == nil {
-		err := m.SetSecretStore(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("secret store is not set")
-	}
-	return m.secretStore, nil
-}
-
+// SetSecretStore sets the secret value store.
 func (m *Manager) SetSecretStore(ctx context.Context) error {
 	switch m.secretType {
 	case SecretTypeFile:
