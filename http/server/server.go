@@ -14,26 +14,34 @@ import (
 // Server is a struct to handle server
 type Server struct {
 	*fiber.App
+	config *fiber.Config
 }
 
 // New creates a new server
 // Basically, it creates a new fiber app with the given config
 func New(serverName string, opt ...Option) (*Server, error) {
-	svc := &Server{
-		App: fiber.New(
-			fiber.Config{
-				// We use static config right now
-				// TODO: Add dynamic config from config file. If needed default config use other function
-				JSONEncoder:   sonic.Marshal,
-				JSONDecoder:   sonic.Unmarshal,
-				ServerHeader:  serverName,
-				StrictRouting: true,
-				CaseSensitive: true,
-				Immutable:     true,
-			},
-		),
-	}
+	svc := &Server{}
+	optPostInit := []Option{}
 	for _, o := range opt {
+		err := o.Apply(svc)
+		if err == ErrAppNil {
+			optPostInit = append(optPostInit, o)
+		}
+	}
+	if svc.config == nil {
+		svc.config = &fiber.Config{
+			JSONEncoder:   sonic.Marshal,
+			JSONDecoder:   sonic.Unmarshal,
+			ServerHeader:  serverName,
+			StrictRouting: true,
+			CaseSensitive: true,
+			Immutable:     true,
+		}
+	} else {
+		svc.config.ServerHeader = serverName
+	}
+	svc.App = fiber.New(*svc.config)
+	for _, o := range optPostInit {
 		o.Apply(svc)
 	}
 	return svc, nil

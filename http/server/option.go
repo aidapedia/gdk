@@ -1,11 +1,17 @@
 package server
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v3"
 )
 
+var (
+	ErrAppNil = errors.New("app is nil")
+)
+
 type Option interface {
-	Apply(svc *Server)
+	Apply(svc *Server) error
 }
 
 // WithMiddlewares is the option that adds middlewares to the server.
@@ -21,8 +27,25 @@ type withMiddlewares struct {
 	middlewares []fiber.Handler
 }
 
-func (o *withMiddlewares) Apply(svc *Server) {
+func (o *withMiddlewares) Apply(svc *Server) error {
+	if svc.App == nil {
+		return ErrAppNil
+	}
 	for _, m := range o.middlewares {
 		svc.App.Use(m)
 	}
+	return nil
+}
+
+func WithAppConfig(config fiber.Config) Option {
+	return &withAppConfig{config: config}
+}
+
+type withAppConfig struct {
+	config fiber.Config
+}
+
+func (o *withAppConfig) Apply(svc *Server) error {
+	svc.config = &o.config
+	return nil
 }
