@@ -37,6 +37,22 @@ func (o *withMiddlewares) Apply(svc *Server) error {
 	return nil
 }
 
+func WithPostHook(hook ...fiber.OnShutdownHandler) Option {
+	return &withPostHook{hook: hook}
+}
+
+type withPostHook struct {
+	hook []fiber.OnShutdownHandler
+}
+
+func (o *withPostHook) Apply(svc *Server) error {
+	if svc.App == nil {
+		return ErrAppNil
+	}
+	svc.App.Hooks().OnShutdown(o.hook...)
+	return nil
+}
+
 func WithAppConfig(config fiber.Config) Option {
 	return &withAppConfig{config: config}
 }

@@ -13,6 +13,7 @@ import (
 
 // Server is a struct to handle server
 type Server struct {
+	// Legacy attribute for fiber app
 	*fiber.App
 	config *fiber.Config
 }
