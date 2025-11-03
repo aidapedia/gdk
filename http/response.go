@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v3"
 
 	gerr "github.com/aidapedia/gdk/error"
@@ -28,13 +30,25 @@ type BaseResponse struct {
 func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 	err, ok := val.(*gerr.Error)
 	if ok && err != nil {
-		msg := err.GetMetadata(ErrorMetadataUserMessage).(string)
-		if msg == "" {
+		msg := err.GetMetadata(ErrorMetadataUserMessage)
+		if msg == nil || msg == "" {
 			msg = err.Error()
 		}
-		c.Status(err.GetMetadata(ErrorMetadataCode).(int)).JSON(&fiber.Map{
+
+		code := err.GetMetadata(ErrorMetadataCode)
+		if code == nil {
+			code = http.StatusInternalServerError
+		}
+		c.Status(code.(int)).JSON(&fiber.Map{
 			"success": false,
 			"message": msg,
+		})
+		return err
+	}
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
 		})
 		return err
 	}
@@ -52,4 +66,14 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 		"data":    data,
 	})
 	return nil
+}
+
+func Metadata(code int, message string) map[string]interface{} {
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+	return map[string]interface{}{
+		ErrorMetadataCode:        code,
+		ErrorMetadataUserMessage: message,
+	}
 }
