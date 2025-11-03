@@ -120,6 +120,12 @@ func ErrorCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	Log.Error(msg, fields...)
 }
 
+// FatalCtx logs a message at level Fatal with log id.
+func FatalCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	fields = append(fields, fieldCheck(ctx)...)
+	Log.Fatal(msg, fields...)
+}
+
 func setLogLevel(level LoggerLevel) zapcore.Level {
 	switch level {
 	case "debug":
