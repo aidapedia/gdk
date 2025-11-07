@@ -5,6 +5,8 @@ import (
 	"runtime"
 )
 
+type Metadata map[string]interface{}
+
 // Error is a struct to handle error
 type Error struct {
 	// raw error message
@@ -13,7 +15,7 @@ type Error struct {
 	caller string
 	// metadata can store anything that you need pass from error.
 	// for example you want to different message from raw error and user error from backend.
-	metadata map[string]interface{}
+	metadata Metadata
 }
 
 // New function used to create new error
@@ -21,7 +23,7 @@ func New(err error) *Error {
 	ers, ok := err.(*Error)
 	if !ok {
 		error := &Error{
-			metadata: make(map[string]interface{}),
+			metadata: make(Metadata),
 			message:  err.Error(),
 		}
 		_, file, line, ok := runtime.Caller(1)

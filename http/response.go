@@ -24,35 +24,59 @@ type BaseResponse struct {
 }
 
 // JSONResponse is the function that will be used to send a JSON response.
-// It will check if the error is a gerr.Error.
-// If it is, it will send a JSON response with the error message.
-// If it is not, it will send a JSON response with the data.
+// For custome message, you can use gerr.Metadata to store the message.
+// Raw error will show on your log message.
+// Example:
+//
+//	 err := gerr.New("Connection Lost")
+//		return gerr.NewWithMetadata(err, http.Metadata(http.StatusBadRequest, "Internal Server Error"))
+//
+// JSON Response:
+//
+//	 {
+//		"success": false,
+//		"message": "Internal Server Error",
+//	 }
+//
+// But if you want to show the raw error message to the user, you can leave ErrorMetadataUserMessage empty.
+// Example:
+//
+//	 err := gerr.New("Connection Lost")
+//			return gerr.NewWithMetadata(err, http.Metadata(http.StatusBadRequest, ""))
+//
+// JSON Response:
+//
+//	 {
+//		"success": false,
+//		"message": "Connection Lost",
+//	 }
 func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
+	// Error Response Check
 	err, ok := val.(*gerr.Error)
 	if ok && err != nil {
-		msg := err.GetMetadata(ErrorMetadataUserMessage)
-		if msg == nil || msg == "" {
-			msg = err.Error()
-		}
+		if ok {
+			msg := err.GetMetadata(ErrorMetadataUserMessage)
+			if msg == nil || msg == "" {
+				msg = err.Error()
+			}
 
-		code := err.GetMetadata(ErrorMetadataCode)
-		if code == nil {
-			code = http.StatusInternalServerError
+			code := err.GetMetadata(ErrorMetadataCode)
+			if code == nil {
+				code = http.StatusInternalServerError
+			}
+			c.Status(code.(int)).JSON(&fiber.Map{
+				"success": false,
+				"message": msg,
+			})
+			return err
 		}
-		c.Status(code.(int)).JSON(&fiber.Map{
-			"success": false,
-			"message": msg,
-		})
-		return err
-	}
-	if err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
 		return err
 	}
-
+	// Success Response
 	if data == nil {
 		c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"success": true,
@@ -68,11 +92,12 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 	return nil
 }
 
-func Metadata(code int, message string) map[string]interface{} {
+// HTTPMetadata is the function that will be used to create a metadata for HTTP response.
+func Metadata(code int, message string) gerr.Metadata {
 	if code == 0 {
 		code = http.StatusInternalServerError
 	}
-	return map[string]interface{}{
+	return gerr.Metadata{
 		ErrorMetadataCode:        code,
 		ErrorMetadataUserMessage: message,
 	}
