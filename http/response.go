@@ -55,12 +55,12 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 	err, ok := val.(*gerr.Error)
 	if ok && err != nil {
 		if ok {
-			msg := err.GetMetadata(ErrorMetadataUserMessage)
+			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
 			if msg == nil || msg == "" {
 				msg = err.Error()
 			}
 
-			code := err.GetMetadata(ErrorMetadataCode)
+			code := err.GetMetadataValue(ErrorMetadataCode)
 			if code == nil {
 				code = http.StatusInternalServerError
 			}

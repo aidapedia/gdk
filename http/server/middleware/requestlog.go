@@ -56,8 +56,10 @@ func WithRequestLog() fiber.Handler {
 			if !ok {
 				request = append(request, zap.Any("error", err.Error()))
 			} else {
-				request = append(request, zap.Any("error", ers.Error()))
-				request = append(request, zap.Any("stacktrace", ers.Caller()))
+				meta := ers.GetMetadata()
+				for k, v := range meta {
+					request = append(request, zap.Any(k, v))
+				}
 			}
 			log.ErrorCtx(c.Context(), "Incoming HTTP Request", request...)
 			return nil

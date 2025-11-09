@@ -5,14 +5,16 @@ import (
 	"runtime"
 )
 
+const (
+	MetadataKeyCaller = "caller"
+)
+
 type Metadata map[string]interface{}
 
 // Error is a struct to handle error
 type Error struct {
 	// raw error message
 	message string
-	// caller of the error. this very helpful where the error come from.
-	caller string
 	// metadata can store anything that you need pass from error.
 	// for example you want to different message from raw error and user error from backend.
 	metadata Metadata
@@ -28,14 +30,14 @@ func New(err error) *Error {
 		}
 		_, file, line, ok := runtime.Caller(1)
 		if ok {
-			error.caller = fmt.Sprintf("%s:%d", file, line)
+			error.metadata[MetadataKeyCaller] = fmt.Sprintf("%s:%d", file, line)
 		}
 		return error
 	}
 	if ers.Caller() == "" {
 		_, file, line, ok := runtime.Caller(1)
 		if ok {
-			ers.caller = fmt.Sprintf("%s:%d", file, line)
+			ers.metadata[MetadataKeyCaller] = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
 	return ers
@@ -51,7 +53,7 @@ func NewWithMetadata(err error, metadata map[string]interface{}) *Error {
 		}
 		_, file, line, ok := runtime.Caller(1)
 		if ok {
-			error.caller = fmt.Sprintf("%s:%d", file, line)
+			error.metadata[MetadataKeyCaller] = fmt.Sprintf("%s:%d", file, line)
 		}
 		return error
 	}
@@ -63,7 +65,7 @@ func NewWithMetadata(err error, metadata map[string]interface{}) *Error {
 	if ers.Caller() == "" {
 		_, file, line, ok := runtime.Caller(1)
 		if ok {
-			ers.caller = fmt.Sprintf("%s:%d", file, line)
+			ers.metadata[MetadataKeyCaller] = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
 	return ers
@@ -76,7 +78,7 @@ func (e *Error) Error() string {
 
 // Caller function used to return caller of the error
 func (e *Error) Caller() string {
-	return e.caller
+	return e.GetMetadataValue(MetadataKeyCaller).(string)
 }
 
 // SetMetadata function used to set metadata of the error
@@ -85,6 +87,13 @@ func (e *Error) SetMetadata(key string, value interface{}) {
 }
 
 // GetMetadata function used to get metadata of the error
-func (e *Error) GetMetadata(key string) interface{} {
+func (e *Error) GetMetadataValue(key string) interface{} {
+	if e.metadata[key] == nil {
+		return nil
+	}
 	return e.metadata[key]
+}
+
+func (e *Error) GetMetadata() Metadata {
+	return e.metadata
 }
