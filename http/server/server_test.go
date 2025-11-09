@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aidapedia/gdk/http/server"
+	"github.com/aidapedia/gdk/mask"
 )
 
 func TestNewWithDefaultConfig(t *testing.T) {
@@ -22,7 +23,7 @@ func TestNewWithDefaultConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, gotErr := server.NewWithDefaultConfig("test-server", tt.opt...)
+			_, gotErr := server.NewWithDefaultConfig("test-server", mask.New(), tt.opt...)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("NewWithDefaultConfig() failed: %v", gotErr)

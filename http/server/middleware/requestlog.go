@@ -6,6 +6,7 @@ import (
 
 	gdkErr "github.com/aidapedia/gdk/error"
 	"github.com/aidapedia/gdk/log"
+	"github.com/aidapedia/gdk/mask"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
@@ -15,7 +16,7 @@ import (
 // WithRequestLog is the middleware that logs the request.
 // If you want to masked your request. You can configure it by setting on log agent.
 // Some agent have feature like redaction rule to mask the request body.
-func WithRequestLog() fiber.Handler {
+func WithRequestLog(mask *mask.Mask) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// Preparing Request Data
 		request := []zapcore.Field{
@@ -35,7 +36,7 @@ func WithRequestLog() fiber.Handler {
 					log.ErrorCtx(c.Context(), "Unmarshal Error", zap.Error(errx))
 				}
 				c.Request().SetBody(reqBodyByte) // Reset
-			case fiber.MIMEMultipartForm:
+			case fiber.MIMEMultipartForm, fiber.MIMEApplicationForm:
 				form, err := c.Request().MultipartForm()
 				if err != nil {
 					log.ErrorCtx(c.Context(), "Parse Form Error", zap.Error(err))
@@ -46,6 +47,12 @@ func WithRequestLog() fiber.Handler {
 				for k, v := range form.File {
 					reqBody[k] = v
 				}
+			case fiber.MIMETextXML, fiber.MIMEApplicationXML, fiber.MIMEApplicationCBOR:
+				reqBody["body"] = string(c.Request().Body())
+			}
+			// Masking Request Body
+			if mask != nil {
+				reqBody, _ = mask.MaskMap(reqBody)
 			}
 			request = append(request, zap.Any("request", reqBody))
 		}

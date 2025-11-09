@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/aidapedia/gdk/http/server/middleware"
+	"github.com/aidapedia/gdk/mask"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 )
@@ -50,12 +51,12 @@ func New(serverName string, opt ...Option) (*Server, error) {
 
 // NewWithDefaultConfig creates a new server with default config
 // This config choosen by the author of the package
-func NewWithDefaultConfig(serverName string, opt ...Option) (*Server, error) {
+func NewWithDefaultConfig(serverName string, mask *mask.Mask, opt ...Option) (*Server, error) {
 	opt = append(opt,
 		WithMiddlewares(
 			middleware.WithContextLog(),
 			middleware.WithRecover(),
-			middleware.WithRequestLog(),
+			middleware.WithRequestLog(mask),
 		),
 	)
 	return New(serverName, opt...)

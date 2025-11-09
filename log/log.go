@@ -42,6 +42,7 @@ func (cfg Config) build() *Logger {
 		config := zap.NewProductionConfig()
 		if !cfg.Caller {
 			config.DisableCaller = true
+			config.DisableStacktrace = true
 		}
 		logger, err := config.Build()
 		if err != nil {
@@ -56,6 +57,7 @@ func (cfg Config) build() *Logger {
 	opt := []zap.Option{}
 	if cfg.Caller {
 		opt = append(opt, zap.AddCaller())
+		opt = append(opt, zap.AddStacktrace(zapcore.PanicLevel))
 	}
 
 	logger := &lumberjack.Logger{
