@@ -93,12 +93,21 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 }
 
 // HTTPMetadata is the function that will be used to create a metadata for HTTP response.
-func Metadata(code int, message string) gerr.Metadata {
+//
+// keyPairs must be in the format of key, value, key, value, ...
+func Metadata(code int, message string, keyPairs ...interface{}) gerr.Metadata {
 	if code == 0 {
 		code = http.StatusInternalServerError
 	}
-	return gerr.Metadata{
+	metadata := gerr.Metadata{
 		ErrorMetadataCode:        code,
 		ErrorMetadataUserMessage: message,
 	}
+	if len(keyPairs) > 0 && len(keyPairs)%2 != 0 {
+		return metadata
+	}
+	for i := 0; i < len(keyPairs); i += 2 {
+		metadata[keyPairs[i].(string)] = keyPairs[i+1]
+	}
+	return metadata
 }
