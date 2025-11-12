@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	gdkErr "github.com/aidapedia/gdk/error"
+	gdkHttp "github.com/aidapedia/gdk/http"
 	"github.com/aidapedia/gdk/log"
 	"github.com/aidapedia/gdk/mask"
 	"github.com/bytedance/sonic"
@@ -63,8 +64,12 @@ func WithRequestLog(mask *mask.Mask) fiber.Handler {
 			if !ok {
 				request = append(request, zap.Any("error", err.Error()))
 			} else {
+				request = append(request, zap.Any("error", err.Error()))
 				meta := ers.GetMetadata()
 				for k, v := range meta {
+					if k == gdkHttp.ErrorMetadataUserMessage || k == gdkHttp.ErrorMetadataCode {
+						continue
+					}
 					request = append(request, zap.Any(k, v))
 				}
 			}
