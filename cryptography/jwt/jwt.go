@@ -8,15 +8,17 @@ import (
 
 // JWTToken is a struct that holds the private keys
 type jwtToken struct {
-	privateKey []byte
+	privatekey []byte
+	publickey  []byte
 	validator  jwt.Validator
 }
 
 var JWT jwtToken
 
-func New(privateKey []byte, parseOpt ...jwt.ParserOption) {
+func New(privatekey, publickey []byte, parseOpt ...jwt.ParserOption) {
 	JWT = jwtToken{
-		privateKey: privateKey,
+		privatekey: privatekey,
+		publickey:  publickey,
 		validator: *jwt.NewValidator(
 			parseOpt...,
 		),
@@ -25,7 +27,7 @@ func New(privateKey []byte, parseOpt ...jwt.ParserOption) {
 
 // SignToken signs a token using a private key
 func SignToken(body map[string]interface{}) (string, error) {
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(JWT.privateKey)
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(JWT.privatekey)
 	if err != nil {
 		return "", fmt.Errorf("generate token parse key error: %w", err)
 	}
@@ -41,8 +43,7 @@ func SignToken(body map[string]interface{}) (string, error) {
 
 // VerifyToken verifies a token using a public key
 func VerifyToken(token string) (map[string]interface{}, error) {
-	// Parse the private key
-	privateKey, err := jwt.ParseRSAPublicKeyFromPEM(JWT.privateKey)
+	key, err := jwt.ParseRSAPublicKeyFromPEM(JWT.publickey)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing private key: %v", err)
 	}
@@ -51,7 +52,7 @@ func VerifyToken(token string) (map[string]interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return privateKey, nil
+		return key, nil
 	})
 	if err != nil {
 		return nil, err
