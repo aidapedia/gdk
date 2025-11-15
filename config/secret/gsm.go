@@ -13,7 +13,7 @@ type GSM struct {
 	projectID string
 }
 
-func NewSecretGSM(projectID string) *GSM {
+func NewSecretGSM(projectID string) Interface {
 	return &GSM{
 		projectID: projectID,
 	}

@@ -11,7 +11,7 @@ type File struct {
 	fileName string
 }
 
-func NewSecretFile(fileName string) *File {
+func NewSecretFile(fileName string) Interface {
 	return &File{
 		viper:    viper.New(),
 		fileName: fileName,

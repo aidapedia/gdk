@@ -8,19 +8,10 @@ import (
 	gerr "github.com/aidapedia/gdk/error"
 )
 
-// We can define a base response struct that will be used by all other response structs.
-// This will help us to maintain a consistent response format across the application.
-// This will also help us to easily change the response format in the future.
-// Example:
-//
-//	 type TestResponse struct {
-//		*BaseResponse `json:"response,omitempty"`
-//		Data interface{} `json:"data"`
-//	 }
-type BaseResponse struct {
-	Status  int     `json:"status"`
-	Message *string `json:"message,omitempty"`
-	Error   string  `json:"error"`
+type SuccessResponse struct {
+	StatusCode int
+	Message    string
+	Data       interface{}
 }
 
 // JSONResponse is the function that will be used to send a JSON response.
@@ -50,10 +41,10 @@ type BaseResponse struct {
 //		"success": false,
 //		"message": "Connection Lost",
 //	 }
-func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
+func JSONResponse(c fiber.Ctx, valSuccess *SuccessResponse, valError error) error {
 	// Error Response Check
-	err, ok := val.(*gerr.Error)
-	if err != nil {
+	if valError != nil {
+		err, ok := valError.(*gerr.Error)
 		if ok {
 			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
 			if msg == nil || msg == "" {
@@ -69,26 +60,32 @@ func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 				"message": msg,
 			})
 			return err
+		} else {
+			c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
+				"success": false,
+				"message": valError.Error(),
+			})
+			return valError
 		}
-		c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-		return err
 	}
 	// Success Response
-	if data == nil {
-		c.Status(fiber.StatusOK).JSON(&fiber.Map{
-			"success": true,
-			"message": "Success",
-		})
-		return err
-	}
-	c.Status(fiber.StatusOK).JSON(&fiber.Map{
+	successResponse := map[string]interface{}{
 		"success": true,
 		"message": "Success",
-		"data":    data,
-	})
+	}
+	statusCode := fiber.StatusOK
+	if valSuccess != nil {
+		if valSuccess.StatusCode != 0 {
+			statusCode = valSuccess.StatusCode
+		}
+		if valSuccess.Message == "" {
+			successResponse["message"] = "Success"
+		}
+		if valSuccess.Data != nil {
+			successResponse["data"] = valSuccess.Data
+		}
+	}
+	c.Status(statusCode).JSON(successResponse)
 	return nil
 }
 
