@@ -53,7 +53,7 @@ type BaseResponse struct {
 func JSONResponse(c fiber.Ctx, data interface{}, val error) error {
 	// Error Response Check
 	err, ok := val.(*gerr.Error)
-	if ok && err != nil {
+	if err != nil {
 		if ok {
 			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
 			if msg == nil || msg == "" {
