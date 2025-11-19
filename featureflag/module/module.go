@@ -24,5 +24,5 @@ type Interface interface {
 	GetString(ctx context.Context, key string) (string, error)
 	GetStruct(ctx context.Context, key string, v interface{}) error
 
-	Watch() (chan bool, error)
+	Watch(ctx context.Context) (chan bool, error)
 }

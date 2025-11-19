@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/aidapedia/gdk/featureflag/module"
@@ -228,6 +229,104 @@ func TestNew(t *testing.T) {
 			if got := New(tt.args.filepath, tt.args.prefix); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestFeatureFlag_Watch(t *testing.T) {
+	type fields struct {
+		root    Dir
+		address string
+		prefix  string
+		RWMutex sync.RWMutex
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "Same",
+			fields: fields{
+				root: Dir{
+					Children: map[string]Dir{
+						"featureflag": {
+							Children: map[string]Dir{
+								"test": {
+									Children: map[string]Dir{},
+									KVs: map[string]interface{}{
+										"int": 2.0,
+									},
+								},
+							},
+						},
+					},
+					KVs: map[string]interface{}{
+						"bool":        true,
+						"string":      "string",
+						"int":         1.0,
+						"float":       1.0,
+						"json_string": "{\"key\":\"json_string\"}",
+					},
+				},
+				address: "test.json",
+				prefix:  "/",
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "Changes",
+			fields: fields{
+				root: Dir{
+					Children: map[string]Dir{
+						"featureflag": {
+							Children: map[string]Dir{
+								"test": {
+									Children: map[string]Dir{},
+									KVs: map[string]interface{}{
+										"int": 2.0,
+									},
+								},
+							},
+						},
+					},
+					KVs: map[string]interface{}{
+						"bool":        false,
+						"string":      "string",
+						"int":         1.0,
+						"float":       1.0,
+						"json_string": "{\"key\":\"json_string\"}",
+					},
+				},
+				address: "test.json",
+				prefix:  "/",
+			},
+			want:    true,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &FeatureFlag{
+				root:    tt.fields.root,
+				address: tt.fields.address,
+				prefix:  tt.fields.prefix,
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			got, err := i.Watch(ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FeatureFlag.Watch() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			result := <-got
+			if result != tt.want {
+				t.Errorf("FeatureFlag.Watch() = %v, want %v", result, tt.want)
+			}
+			cancel()
 		})
 	}
 }

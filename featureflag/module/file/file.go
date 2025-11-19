@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aidapedia/gdk/featureflag/module"
@@ -32,8 +32,6 @@ type FeatureFlag struct {
 	address string
 
 	prefix string
-
-	sync.RWMutex
 }
 
 // New creates a new file module.
@@ -110,9 +108,8 @@ func (i *FeatureFlag) GetStruct(ctx context.Context, key string, v interface{}) 
 
 // Watch watches for feature flag changes.
 // Each time the feature flag changes, it will send true to the channel.
-func (i *FeatureFlag) Watch() (chan bool, error) {
+func (i *FeatureFlag) Watch(ctx context.Context) (chan bool, error) {
 	var (
-		ctx = context.Background()
 		err error
 		do  = make(chan bool)
 	)
@@ -126,6 +123,11 @@ func (i *FeatureFlag) Watch() (chan bool, error) {
 				root, err = readConfigRoot(i.address, i.prefix)
 				if err != nil {
 					return
+				}
+				if reflect.DeepEqual(i.root, root) {
+					do <- false
+					time.Sleep(time.Second * 5)
+					continue
 				}
 				i.root = root
 				do <- true
