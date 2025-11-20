@@ -274,3 +274,151 @@ func ToTime(v interface{}) time.Time {
 		return time.Time{}
 	}
 }
+
+func ToUint64(v interface{}) uint64 {
+	switch v := v.(type) {
+	case string:
+		str := strings.TrimSpace(v)
+		parsed, err := strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return 0
+		}
+		return parsed
+	case int:
+		return uint64(v)
+	case int8:
+		return uint64(v)
+	case int32:
+		return uint64(v)
+	case int64:
+		return uint64(v)
+	case float32:
+		return uint64(v)
+	case float64:
+		return uint64(v)
+	case []byte:
+		parsed, err := strconv.ParseUint(string(v), 10, 64)
+		if err != nil {
+			return 0
+		}
+		return parsed
+	case bool:
+		if v {
+			return 1
+		}
+		return 0
+	default:
+		return 0
+	}
+}
+
+func ToUint32(v interface{}) uint32 {
+	switch v := v.(type) {
+	case string:
+		str := strings.TrimSpace(v)
+		parsed, err := strconv.ParseUint(str, 10, 32)
+		if err != nil {
+			return 0
+		}
+		return uint32(parsed)
+	case int:
+		return uint32(v)
+	case int8:
+		return uint32(v)
+	case int32:
+		return uint32(v)
+	case int64:
+		return uint32(v)
+	case float32:
+		return uint32(v)
+	case float64:
+		return uint32(v)
+	case []byte:
+		parsed, err := strconv.ParseUint(string(v), 10, 32)
+		if err != nil {
+			return 0
+		}
+		return uint32(parsed)
+	case bool:
+		if v {
+			return 1
+		}
+		return 0
+	default:
+		return 0
+	}
+}
+
+func ToUint16(v interface{}) uint16 {
+	switch v := v.(type) {
+	case string:
+		str := strings.TrimSpace(v)
+		parsed, err := strconv.ParseUint(str, 10, 16)
+		if err != nil {
+			return 0
+		}
+		return uint16(parsed)
+	case int:
+		return uint16(v)
+	case int8:
+		return uint16(v)
+	case int32:
+		return uint16(v)
+	case int64:
+		return uint16(v)
+	case float32:
+		return uint16(v)
+	case float64:
+		return uint16(v)
+	case []byte:
+		parsed, err := strconv.ParseUint(string(v), 10, 16)
+		if err != nil {
+			return 0
+		}
+		return uint16(parsed)
+	case bool:
+		if v {
+			return 1
+		}
+		return 0
+	default:
+		return 0
+	}
+}
+
+func ToUint8(v interface{}) uint8 {
+	switch v := v.(type) {
+	case string:
+		str := strings.TrimSpace(v)
+		parsed, err := strconv.ParseUint(str, 10, 8)
+		if err != nil {
+			return 0
+		}
+		return uint8(parsed)
+	case int:
+		return uint8(v)
+	case int8:
+		return uint8(v)
+	case int32:
+		return uint8(v)
+	case int64:
+		return uint8(v)
+	case float32:
+		return uint8(v)
+	case float64:
+		return uint8(v)
+	case []byte:
+		parsed, err := strconv.ParseUint(string(v), 10, 8)
+		if err != nil {
+			return 0
+		}
+		return uint8(parsed)
+	case bool:
+		if v {
+			return 1
+		}
+		return 0
+	default:
+		return 0
+	}
+}
