@@ -178,7 +178,8 @@ func readConfigRoot(filepath, prefix string) (Dir, error) {
 	}
 
 	var configKeys Dir
-	if prefix != "" && prefix != "/" {
+	prefix = strings.TrimPrefix(prefix, "/")
+	if prefix != "" {
 		configKeys, err = findDir(root.Dir, strings.Split(prefix, "/"))
 		if err != nil {
 			return Dir{}, err
