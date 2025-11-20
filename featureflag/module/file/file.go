@@ -19,8 +19,8 @@ type Root struct {
 }
 
 type Dir struct {
-	KVs      map[string]interface{} `json:"keys,omitempty"`
-	Children map[string]Dir         `json:"children,omitempty"`
+	KVs   map[string]interface{} `json:"keys,omitempty"`
+	Child map[string]Dir         `json:"child,omitempty"`
 }
 
 // File is the file module.
@@ -61,7 +61,7 @@ func (i *FeatureFlag) GetValue(ctx context.Context, key string) (interface{}, er
 		if err != nil {
 			return nil, err
 		}
-		KVs = dirs.Children[dir[len(dir)-2]].KVs
+		KVs = dirs.Child[dir[len(dir)-2]].KVs
 	} else {
 		KVs = i.root.KVs
 	}
@@ -125,7 +125,6 @@ func (i *FeatureFlag) Watch(ctx context.Context) (chan bool, error) {
 					return
 				}
 				if reflect.DeepEqual(i.root, root) {
-					do <- false
 					time.Sleep(time.Second * 5)
 					continue
 				}
@@ -141,14 +140,14 @@ func (i *FeatureFlag) Watch(ctx context.Context) (chan bool, error) {
 // findDir finds the directory in the config.
 func findDir(config Dir, filepath []string) (Dir, error) {
 	for index := 0; index < len(filepath); index++ {
-		_, found := config.Children[filepath[index]]
+		_, found := config.Child[filepath[index]]
 		if !found {
 			return Dir{}, fmt.Errorf("failed to find dir %s in file %s", filepath[index], filepath)
 		}
 		if index == len(filepath)-1 {
 			break
 		}
-		config = config.Children[filepath[index]]
+		config = config.Child[filepath[index]]
 	}
 	return config, nil
 }

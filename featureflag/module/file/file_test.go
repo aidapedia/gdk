@@ -29,11 +29,11 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			name: "Value String",
 			fields: fields{
 				configKeys: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"key1": "value1",
 									},
@@ -54,11 +54,11 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			name: "Not Found",
 			fields: fields{
 				configKeys: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"key1": "value1",
 									},
@@ -79,11 +79,11 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			name: "Value Integer",
 			fields: fields{
 				configKeys: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"key1": 123,
 									},
@@ -104,11 +104,11 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			name: "Value Boolean",
 			fields: fields{
 				configKeys: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"key1": true,
 									},
@@ -129,11 +129,11 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			name: "Value JSON String",
 			fields: fields{
 				configKeys: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"key1": "{\"key\":\"value\"}",
 									},
@@ -201,11 +201,11 @@ func TestNew(t *testing.T) {
 			},
 			want: &FeatureFlag{
 				root: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"int": 2.0,
 									},
@@ -250,11 +250,11 @@ func TestFeatureFlag_Watch(t *testing.T) {
 			name: "Same",
 			fields: fields{
 				root: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"int": 2.0,
 									},
@@ -280,11 +280,11 @@ func TestFeatureFlag_Watch(t *testing.T) {
 			name: "Changes",
 			fields: fields{
 				root: Dir{
-					Children: map[string]Dir{
+					Child: map[string]Dir{
 						"featureflag": {
-							Children: map[string]Dir{
+							Child: map[string]Dir{
 								"test": {
-									Children: map[string]Dir{},
+									Child: map[string]Dir{},
 									KVs: map[string]interface{}{
 										"int": 2.0,
 									},

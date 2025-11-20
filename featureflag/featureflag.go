@@ -6,16 +6,16 @@ import (
 )
 
 type Option struct {
-	address string
-	module  module.Module
-	prefix  string
+	Address string
+	Module  module.Module
+	Prefix  string
 }
 
 // New creates a new feature flag module.
 func New(opt Option) module.Interface {
-	switch opt.module {
+	switch opt.Module {
 	case module.FileModule:
-		return file.New(opt.address, opt.prefix)
+		return file.New(opt.Address, opt.Prefix)
 	default:
 		return nil
 	}
