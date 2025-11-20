@@ -52,7 +52,11 @@ func ToBool(v interface{}) bool {
 			return false
 		}
 		return result
-	case int, int32, int64:
+	case int, int32, int64, uint32, uint64, uint:
+		return v != 0
+	case bool:
+		return v
+	case float32, float64:
 		return v != 0
 	default:
 		return false
