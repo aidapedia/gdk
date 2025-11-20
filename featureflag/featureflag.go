@@ -2,6 +2,7 @@ package featureflag
 
 import (
 	"github.com/aidapedia/gdk/featureflag/module"
+	"github.com/aidapedia/gdk/featureflag/module/consul"
 	"github.com/aidapedia/gdk/featureflag/module/file"
 )
 
@@ -16,6 +17,8 @@ func New(opt Option) module.Interface {
 	switch opt.Module {
 	case module.FileModule:
 		return file.New(opt.Address, opt.Prefix)
+	case module.ConsulModule:
+		return consul.New(opt.Address, opt.Prefix)
 	default:
 		return nil
 	}
