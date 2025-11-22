@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	gctx "github.com/aidapedia/gdk/context"
@@ -35,7 +34,7 @@ func New(opt ...Option) *Client {
 	return c
 }
 
-func (c *Client) Send(ctx context.Context, req *Request) *Response {
+func (c *Client) Send(ctx context.Context, req *Request) (*client.Response, error) {
 	// force set client to the request
 	req.SetClient(c.cli)
 	req.AddHeader(gctx.ContextKeyLogID, ctx.Value(gctx.ContextKeyLogID).(string))
@@ -53,16 +52,5 @@ func (c *Client) Send(ctx context.Context, req *Request) *Response {
 		req.SetTimeout(c.globalTimeout)
 	}
 
-	resp, err := req.Send()
-	if err != nil {
-		return NewResponse(nil, err)
-	}
-	defer resp.Close()
-
-	// check status code
-	if resp.StatusCode() >= 400 {
-		return NewResponse(resp, fmt.Errorf("unexpected status code: %d", resp.StatusCode()))
-	}
-
-	return NewResponse(resp, nil)
+	return req.Send()
 }
