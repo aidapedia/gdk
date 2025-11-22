@@ -32,6 +32,7 @@ func New(opt ...Option) *Client {
 	cli := client.New()
 	cli.SetJSONUnmarshal(sonic.Unmarshal)
 	c.cli = cli
+
 	return c
 }
 
@@ -61,7 +62,8 @@ func (c *Client) Send(ctx context.Context, req *Request, resp interface{}) error
 	}
 	defer res.Close()
 
-	if res.StatusCode() != 200 {
+	// check status code
+	if res.StatusCode() >= 400 {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
 	}
 
