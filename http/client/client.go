@@ -7,7 +7,6 @@ import (
 
 	gctx "github.com/aidapedia/gdk/context"
 	"github.com/bytedance/sonic"
-	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/client"
 	"go.uber.org/ratelimit"
 )
@@ -36,9 +35,7 @@ func New(opt ...Option) *Client {
 	return c
 }
 
-// Send sends a request to the server.
-// It sets the client and context to the request.
-func (c *Client) Send(ctx context.Context, req *Request, resp interface{}) error {
+func (c *Client) Send(ctx context.Context, req *Request) *Response {
 	// force set client to the request
 	req.SetClient(c.cli)
 	req.AddHeader(gctx.ContextKeyLogID, ctx.Value(gctx.ContextKeyLogID).(string))
@@ -56,41 +53,16 @@ func (c *Client) Send(ctx context.Context, req *Request, resp interface{}) error
 		req.SetTimeout(c.globalTimeout)
 	}
 
-	res, err := req.Send()
+	resp, err := req.Send()
 	if err != nil {
-		return err
+		return NewResponse(nil, err)
 	}
-	defer res.Close()
+	defer resp.Close()
 
 	// check status code
-	if res.StatusCode() >= 400 {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
+	if resp.StatusCode() >= 400 {
+		return NewResponse(resp, fmt.Errorf("unexpected status code: %d", resp.StatusCode()))
 	}
 
-	err = c.cli.JSONUnmarshal()(res.Body(), resp)
-	if err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return nil
-}
-
-func (c *Client) Get(ctx context.Context, req *Request, resp interface{}) error {
-	req.SetMethod(fiber.MethodGet)
-	return c.Send(ctx, req, resp)
-}
-
-func (c *Client) Post(ctx context.Context, req *Request, resp interface{}) error {
-	req.SetMethod(fiber.MethodPost)
-	return c.Send(ctx, req, resp)
-}
-
-func (c *Client) Put(ctx context.Context, req *Request, resp interface{}) error {
-	req.SetMethod(fiber.MethodPut)
-	return c.Send(ctx, req, resp)
-}
-
-func (c *Client) Delete(ctx context.Context, req *Request, resp interface{}) error {
-	req.SetMethod(fiber.MethodDelete)
-	return c.Send(ctx, req, resp)
+	return NewResponse(resp, nil)
 }
