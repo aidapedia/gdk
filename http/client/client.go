@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"time"
 
 	gctx "github.com/aidapedia/gdk/context"
 	"github.com/bytedance/sonic"
@@ -16,20 +15,19 @@ type Client struct {
 	// rate limiter
 	// Key is the path of the request. Example: using path /user
 	ratelimiter map[string]ratelimit.Limiter
-	// global timeout for all requests
-	globalTimeout time.Duration
 }
 
 // New creates a new client.
 func New(opt ...Option) *Client {
 	c := &Client{}
-	for _, o := range opt {
-		o.Apply(c)
-	}
 	// create client
 	cli := client.New()
 	cli.SetJSONUnmarshal(sonic.Unmarshal)
 	c.cli = cli
+
+	for _, o := range opt {
+		o.Apply(c)
+	}
 
 	return c
 }
@@ -44,12 +42,6 @@ func (c *Client) Send(ctx context.Context, req *Request) (*client.Response, erro
 		if limiter, ok := c.ratelimiter[req.URL()]; ok {
 			limiter.Take()
 		}
-	}
-
-	// set global timeout if not set
-	// priority: request timeout > client global timeout
-	if req.Timeout() == 0 && c.globalTimeout > 0 {
-		req.SetTimeout(c.globalTimeout)
 	}
 
 	return req.Send()

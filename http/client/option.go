@@ -48,5 +48,17 @@ type withGlobalTimeout struct {
 }
 
 func (o *withGlobalTimeout) Apply(cli *Client) {
-	cli.globalTimeout = o.timeout
+	cli.cli.SetTimeout(o.timeout)
+}
+
+func WithSetHeaders(headers map[string]string) Option {
+	return &withSetHeaders{headers: headers}
+}
+
+type withSetHeaders struct {
+	headers map[string]string
+}
+
+func (o *withSetHeaders) Apply(cli *Client) {
+	cli.cli.SetHeaders(o.headers)
 }
