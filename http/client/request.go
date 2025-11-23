@@ -11,8 +11,7 @@ type Request struct {
 }
 
 func NewRequest(ctx context.Context) *Request {
-	req := &client.Request{}
-	req.SetContext(ctx)
+	req := client.AcquireRequest().SetContext(ctx)
 	return &Request{
 		Request: req,
 	}

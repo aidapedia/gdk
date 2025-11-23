@@ -34,8 +34,7 @@ func New(opt ...Option) *Client {
 
 func (c *Client) Send(ctx context.Context, req *Request) (*client.Response, error) {
 	// force set client to the request
-	req.SetClient(c.cli)
-	req.AddHeader(gctx.ContextKeyLogID, ctx.Value(gctx.ContextKeyLogID).(string))
+	req.SetClient(c.cli).AddHeader(gctx.ContextKeyLogID, ctx.Value(gctx.ContextKeyLogID).(string))
 
 	// check rate limit
 	if c.ratelimiter != nil {
