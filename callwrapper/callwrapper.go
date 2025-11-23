@@ -55,14 +55,15 @@ type Options struct {
 
 // New creates a new callwrapper.
 func New(name string, opt Options) error {
-	cw := &CallWrapper{
-		name: name,
-		opt:  opt,
+	if opt.Hook.BeforeHook == nil {
+		opt.Hook.BeforeHook = func(ctx context.Context) map[string]interface{} {
+			return nil
+		}
 	}
 
-	// Check if the callwrapper name already exists.
-	if _, ok := callWrappers[name]; ok {
-		return fmt.Errorf("callwrapper name %s already exists", name)
+	if opt.Hook.AfterHook == nil {
+		opt.Hook.AfterHook = func(ctx context.Context, param map[string]interface{}) {
+		}
 	}
 
 	// Hook default configuration.
@@ -87,6 +88,16 @@ func New(name string, opt Options) error {
 		if opt.CacheExpiration == 0 {
 			opt.CacheExpiration = time.Minute * 5
 		}
+	}
+
+	cw := &CallWrapper{
+		name: name,
+		opt:  opt,
+	}
+
+	// Check if the callwrapper name already exists.
+	if _, ok := callWrappers[name]; ok {
+		return fmt.Errorf("callwrapper name %s already exists", name)
 	}
 
 	callWrappers[name] = cw

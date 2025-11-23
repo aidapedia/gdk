@@ -2,7 +2,9 @@ package concurrency
 
 import (
 	"context"
+	"fmt"
 
+	gerr "github.com/aidapedia/gdk/error"
 	"github.com/aidapedia/gdk/log"
 	"go.uber.org/zap"
 )
@@ -37,7 +39,7 @@ func Call(ctx context.Context, fn func(ctx context.Context)) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				concurrency.recoverHook(ctxRtn, r)
+				concurrency.recoverHook(ctxRtn, gerr.New(fmt.Errorf("%v", r)))
 			}
 		}()
 		fn(ctxRtn)
