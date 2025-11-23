@@ -64,3 +64,7 @@ func (c *GoRedisClient) HGET(ctx context.Context, key string, field string) (str
 func (c *GoRedisClient) HGETALL(ctx context.Context, key string) (map[string]string, error) {
 	return c.Client.HGetAll(ctx, key).Result()
 }
+
+func (c *GoRedisClient) DEL(ctx context.Context, keys ...string) error {
+	return c.Client.Del(ctx, keys...).Err()
+}

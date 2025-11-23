@@ -16,4 +16,5 @@ type Interface interface {
 	HSET(ctx context.Context, key string, fields map[string]string) error
 	HGET(ctx context.Context, key string, field string) (string, error)
 	HGETALL(ctx context.Context, key string) (map[string]string, error)
+	DEL(ctx context.Context, keys ...string) error
 }
