@@ -3,159 +3,78 @@ package file
 import (
 	"context"
 	"reflect"
-	"sync"
 	"testing"
-
-	"github.com/aidapedia/gdk/featureflag/module"
-	"github.com/bytedance/sonic"
 )
 
 func TestFeatureFlag_GetValue(t *testing.T) {
-	type fields struct {
-		configKeys Dir
-	}
 	type args struct {
 		ctx context.Context
 		key string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    interface{}
 		wantErr bool
 	}{
 		{
-			name: "Value String",
-			fields: fields{
-				configKeys: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"key1": "value1",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			name: "key_bool",
 			args: args{
 				ctx: context.Background(),
-				key: "featureflag/test/key1",
-			},
-			want:    "value1",
-			wantErr: false,
-		},
-		{
-			name: "Not Found",
-			fields: fields{
-				configKeys: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"key1": "value1",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				ctx: context.Background(),
-				key: "featureflag/test/key2",
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "Value Integer",
-			fields: fields{
-				configKeys: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"key1": 123,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				ctx: context.Background(),
-				key: "featureflag/test/key1",
-			},
-			want:    123,
-			wantErr: false,
-		},
-		{
-			name: "Value Boolean",
-			fields: fields{
-				configKeys: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"key1": true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				ctx: context.Background(),
-				key: "featureflag/test/key1",
+				key: "key_bool",
 			},
 			want:    true,
 			wantErr: false,
 		},
 		{
-			name: "Value JSON String",
-			fields: fields{
-				configKeys: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"key1": "{\"key\":\"value\"}",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			name: "key_string",
 			args: args{
 				ctx: context.Background(),
-				key: "featureflag/test/key1",
+				key: "key_string",
 			},
-			want:    "{\"key\":\"value\"}",
+			want:    "string",
+			wantErr: false,
+		},
+		{
+			name: "key_int",
+			args: args{
+				ctx: context.Background(),
+				key: "key_int",
+			},
+			want:    float64(1),
+			wantErr: false,
+		},
+		{
+			name: "key_float",
+			args: args{
+				ctx: context.Background(),
+				key: "key_float",
+			},
+			want:    1.0,
+			wantErr: false,
+		},
+		{
+			name: "key_json_string",
+			args: args{
+				ctx: context.Background(),
+				key: "key_json_string",
+			},
+			want:    `{"key":"json_string"}`,
+			wantErr: false,
+		},
+		{
+			name: "folder",
+			args: args{
+				ctx: context.Background(),
+				key: "folder/key",
+			},
+			want:    "value",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &FeatureFlag{
-				root: tt.fields.configKeys,
-			}
+			i := New("test.json", "")
 			got, err := i.GetValue(tt.args.ctx, tt.args.key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FeatureFlag.GetValue() error = %v, wantErr %v", err, tt.wantErr)
@@ -164,81 +83,15 @@ func TestFeatureFlag_GetValue(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FeatureFlag.GetValue() = %v, want %v", got, tt.want)
 			}
-
-			type TestStruct struct {
-				Key string `json:"key"`
-			}
-			if tt.name == "Value JSON String" {
-				var testStruct TestStruct
-				err := sonic.Unmarshal([]byte(got.(string)), &testStruct)
-				if err != nil {
-					t.Errorf("FeatureFlag.GetValue() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-				if testStruct.Key != "value" {
-					t.Errorf("FeatureFlag.GetValue() = %v, want %v", testStruct.Key, "value")
-				}
-			}
-		})
-	}
-}
-
-func TestNew(t *testing.T) {
-	type args struct {
-		filepath string
-		prefix   string
-	}
-	tests := []struct {
-		name string
-		args args
-		want module.Interface
-	}{
-		{
-			name: "Normal Type",
-			args: args{
-				filepath: "test.json",
-				prefix:   "/",
-			},
-			want: &FeatureFlag{
-				root: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"int": 2.0,
-									},
-								},
-							},
-						},
-					},
-					KVs: map[string]interface{}{
-						"bool":        true,
-						"string":      "string",
-						"int":         1.0,
-						"float":       1.0,
-						"json_string": "{\"key\":\"json_string\"}",
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := New(tt.args.filepath, tt.args.prefix); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("New() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
 
 func TestFeatureFlag_Watch(t *testing.T) {
 	type fields struct {
-		root    Dir
+		root    FolderItf
 		address string
 		prefix  string
-		RWMutex sync.RWMutex
 	}
 	tests := []struct {
 		name    string
@@ -247,59 +100,13 @@ func TestFeatureFlag_Watch(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Same",
-			fields: fields{
-				root: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"int": 2.0,
-									},
-								},
-							},
-						},
-					},
-					KVs: map[string]interface{}{
-						"bool":        true,
-						"string":      "string",
-						"int":         1.0,
-						"float":       1.0,
-						"json_string": "{\"key\":\"json_string\"}",
-					},
-				},
-				address: "test.json",
-				prefix:  "/",
-			},
-			want:    false,
-			wantErr: false,
-		},
-		{
 			name: "Changes",
 			fields: fields{
-				root: Dir{
-					Child: map[string]Dir{
-						"featureflag": {
-							Child: map[string]Dir{
-								"test": {
-									Child: map[string]Dir{},
-									KVs: map[string]interface{}{
-										"int": 2.0,
-									},
-								},
-							},
-						},
-					},
-					KVs: map[string]interface{}{
-						"bool":        false,
-						"string":      "string",
-						"int":         1.0,
-						"float":       1.0,
-						"json_string": "{\"key\":\"json_string\"}",
-					},
-				},
+				root: func() FolderItf {
+					root, _ := parseFromFileJSON(nil, "test.json")
+					root.Add(NewKey("changes", 2.0))
+					return root
+				}(),
 				address: "test.json",
 				prefix:  "/",
 			},

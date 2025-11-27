@@ -1,118 +1,112 @@
-# Feature Flag
+# File-based Feature Flag Module
 
-The `featureflag` package provides a flexible way to manage feature flags in your application. It supports different modules, including a file-based module.
+This module provides a file-based implementation for the feature flag system. It allows you to load feature flags from a JSON file.
 
-## JSON Structure Format
+## JSON Structure
 
-When using the **File Module**, the configuration is stored in a JSON file. The structure consists of a `root` object which contains `keys` for values and `child` for nested configurations.
+The feature flags are defined in a JSON file. The structure supports nested objects, which are treated as folders.
 
-> [!IMPORTANT]
-> The JSON tag for nested directories is `child` (singular), not `children`.
-
-### Example `config.json`
+Example `config.json`:
 
 ```json
 {
-  "root": {
-    "keys": {
-      "global_feature_enabled": true,
-      "max_retries": 3,
-      "app_name": "MyApp",
-      "config_json": "{\"timeout\": 5000}"
-    },
-    "child": {
-      "payment": {
-        "keys": {
-          "stripe_enabled": true
-        },
-        "child": {
-          "v2": {
-            "keys": {
-              "new_flow": true
-            }
-          }
-        }
-      }
+    "key_bool": true,
+    "key_string": "some string value",
+    "key_int": 42,
+    "key_float": 3.14,
+    "feature_group": {
+        "sub_feature_enabled": true,
+        "config_value": "nested value"
     }
-  }
 }
 ```
 
-## Initialization
+## Usage
 
-To initialize the feature flag with the file module:
+### Initialization
+
+To use the file module, you need to initialize it with the path to your JSON configuration file. You can optionally provide a prefix to scope the feature flags to a specific section of the JSON.
 
 ```go
 package main
 
 import (
-	"github.com/aidapedia/gdk/featureflag"
-	"github.com/aidapedia/gdk/featureflag/module"
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/aidapedia/gdk/featureflag/module/file"
 )
 
 func main() {
-	// Initialize the feature flag
-	ff := featureflag.New(featureflag.Option{
-		Module:  module.FileModule,
-		Address: "path/to/config.json", // Path to your JSON file
-		Prefix:  "/",                   // Optional prefix to scope the root
-	})
+	// Initialize with the path to the JSON file and an empty prefix
+	ffModule := file.New("/path/to/config.json", "")
 
-    // ... use ff
+	// Or initialize with a prefix to scope to "feature_group"
+	// ffModule := file.New("/path/to/config.json", "feature_group")
 }
 ```
 
-## Getting Keys
+### Retrieving Values
 
-You can retrieve values using various typed methods. All methods accept a `context.Context` and the key path.
+You can retrieve values using the standard methods provided by the module interface. Note that for nested keys, you should use the `/` separator.
 
 ```go
 ctx := context.Background()
 
 // Get a boolean value
-enabled, err := ff.GetBool(ctx, "global_feature_enabled")
-
-// Get an integer value
-retries, err := ff.GetInt(ctx, "max_retries")
+enabled, err := ffModule.GetBool(ctx, "key_bool")
+if err != nil {
+    log.Printf("Error getting bool: %v", err)
+}
 
 // Get a string value
-appName, err := ff.GetString(ctx, "app_name")
-
-// Get a value from a nested path (separated by /)
-stripeEnabled, err := ff.GetBool(ctx, "payment/stripe_enabled")
-
-// Get a raw interface{} value
-val, err := ff.GetValue(ctx, "some/key")
-
-// Get a struct (parses JSON string value)
-// Note: The value in the JSON file must be a string containing JSON.
-type MyConfig struct {
-    Timeout int `json:"timeout"`
+strVal, err := ffModule.GetString(ctx, "key_string")
+if err != nil {
+    log.Printf("Error getting string: %v", err)
 }
-var cfg MyConfig
-err = ff.GetStruct(ctx, "config_json", &cfg)
+
+// Get an integer value
+intVal, err := ffModule.GetInt(ctx, "key_int")
+if err != nil {
+    log.Printf("Error getting int: %v", err)
+}
+
+// Get a value from a nested structure (if initialized without prefix)
+// Use slash separator for nested keys
+nestedVal, err := ffModule.GetBool(ctx, "feature_group/sub_feature_enabled") 
+
+// Get a struct value
+// The value in JSON must be a string containing the JSON representation of the struct
+// Example JSON: "key_struct": "{\"field\": \"value\"}"
+type MyStruct struct {
+    Field string `json:"field"`
+}
+var myStruct MyStruct
+err = ffModule.GetStruct(ctx, "key_json_string", &myStruct)
+if err != nil {
+    log.Printf("Error getting struct: %v", err)
+}
 ```
 
-## Watching Feature Flag Values
+### Watching for Changes
 
-You can watch for changes in the feature flag configuration file. The `Watch` method returns a channel that receives a notification whenever the file changes.
+The `Watch` method allows you to monitor the configuration file for changes. It polls the file every 5 seconds. If a change is detected, it updates the internal state and sends a signal on the returned channel.
 
 ```go
-// Start watching
-watcher, err := ff.Watch(ctx)
+// Start watching for changes
+changeChan, err := ffModule.Watch(ctx)
 if err != nil {
-    // handle error
+    log.Fatalf("Failed to watch for changes: %v", err)
 }
 
+// Listen for changes in a goroutine
 go func() {
-    for range watcher {
-        // The feature flag configuration has changed
-        // You can re-fetch values or trigger updates here
-        fmt.Println("Feature flag configuration updated")
-        
-        // Example: re-check a flag
-        newVal, _ := ff.GetBool(ctx, "global_feature_enabled")
-        fmt.Println("New value:", newVal)
+    for range changeChan {
+        log.Println("Configuration file changed! Reloading values...")
+        // You can now retrieve the updated values
+        newVal, _ := ffModule.GetBool(ctx, "key_bool")
+        log.Printf("New value for key_bool: %v", newVal)
     }
 }()
 ```

@@ -1,23 +1,10 @@
 {
-    "root": {
-        "children": {
-            "featureflag": {
-                "children": {
-                    "test": {
-                        "children": {},
-                        "keys": {
-                            "int": 2
-                        }
-                    }
-                }
-            }
-        },
-        "keys": {
-            "bool": true,
-            "string": "string",
-            "int": 1,
-            "float": 1.0,
-            "json_string": "{\"key\":\"json_string\"}"
-        }
+    "key_bool": true,
+    "key_string": "string",
+    "key_int": 1,
+    "key_float": 1.0,
+    "key_json_string": "{\"key\":\"json_string\"}",
+    "folder": {
+        "key": "value"
     }
 }
