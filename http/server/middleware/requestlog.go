@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
 	gdkErr "github.com/aidapedia/gdk/error"
@@ -25,18 +24,16 @@ func WithRequestLog(mask *mask.Mask) fiber.Handler {
 			zap.String("uri", string(c.Request().RequestURI())),
 		}
 		reqBody := make(map[string]interface{})
-		if c.Request().BodyStream() != http.NoBody { // Read
+		if c.Request().BodyStream() != http.NoBody {
 			switch string(c.Request().Header.Peek(fiber.HeaderContentType)) {
 			case fiber.MIMEApplicationJSON:
 				reqBodyByte := c.Request().Body()
-				if reqBodyByte == nil {
-					fmt.Println("Request Body is nil")
+				if reqBodyByte != nil && len(reqBodyByte) > 0 {
+					errx := sonic.Unmarshal(reqBodyByte, &reqBody)
+					if errx != nil {
+						log.ErrorCtx(c.Context(), "Unmarshal Error", zap.Error(errx))
+					}
 				}
-				errx := sonic.Unmarshal(reqBodyByte, &reqBody)
-				if errx != nil {
-					log.ErrorCtx(c.Context(), "Unmarshal Error", zap.Error(errx))
-				}
-				c.Request().SetBody(reqBodyByte) // Reset
 			case fiber.MIMEMultipartForm, fiber.MIMEApplicationForm:
 				form, err := c.Request().MultipartForm()
 				if err != nil {
