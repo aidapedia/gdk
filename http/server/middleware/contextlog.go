@@ -15,7 +15,7 @@ func WithContextLog() fiber.Handler {
 			logID = log.GenerateLogID()
 		}
 		c.Response().Header.Set(gctx.ContextKeyLogID, logID)
-		c.SetContext(context.WithValue(context.Background(), gctx.ContextKeyLogID, logID))
+		c.SetContext(context.WithValue(c.Context(), gctx.ContextKeyLogID, logID))
 		return c.Next()
 	}
 }
