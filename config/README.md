@@ -13,6 +13,9 @@ This package provides a simple way to load configuration and secrets into your a
 - `CONFIG_FILE_PATH`: Directory containing your config files (e.g. `./config` or `./config/test`).
 - `SECRET_FILE_PATH`: Full path to the secret file (e.g. `./config/secret.json`).
 - `SECRET_GSM_PROJECT_ID`: GSM project ID when using GSM.
+- `SECRET_VAULT_ADDRESS`: Vault address when using Vault.
+- `SECRET_VAULT_TOKEN`: Vault token when using Vault.
+- `SECRET_VAULT_PATH`: Vault path when using Vault.
 
 ## Config File Layout
 

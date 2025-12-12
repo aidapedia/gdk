@@ -31,3 +31,24 @@ func GetConfigPath() string {
 	}
 	return ""
 }
+
+func GetSecretVaultAddress() string {
+	if address := os.Getenv("SECRET_VAULT_ADDRESS"); address != "" {
+		return address
+	}
+	return ""
+}
+
+func GetSecretVaultToken() string {
+	if token := os.Getenv("SECRET_VAULT_TOKEN"); token != "" {
+		return token
+	}
+	return ""
+}
+
+func GetSecretVaultPath() string {
+	if path := os.Getenv("SECRET_VAULT_PATH"); path != "" {
+		return path
+	}
+	return ""
+}
