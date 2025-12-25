@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	gerr "github.com/aidapedia/gdk/error"
+	"github.com/aidapedia/gdk/http/server/response"
 )
 
 type SuccessResponse struct {
@@ -14,6 +15,7 @@ type SuccessResponse struct {
 	Data       interface{}
 }
 
+// DEPRECATED: Use response.JSONResponse instead
 // JSONResponse is the function that will be used to send a JSON response.
 // For custome message, you can use gerr.Metadata to store the message.
 // Raw error will show on your log message.
@@ -42,51 +44,53 @@ type SuccessResponse struct {
 //		"message": "Connection Lost",
 //	 }
 func JSONResponse(c fiber.Ctx, valSuccess *SuccessResponse, valError error) error {
-	// Error Response Check
+	var (
+		statusCode int
+		message    string
+	)
+
 	if valError != nil {
+		statusCode = http.StatusInternalServerError
+		message = "Internal Server Error"
+
 		err, ok := valError.(*gerr.Error)
 		if ok {
 			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
 			if msg == nil || msg == "" {
-				msg = err.Error()
+				message = err.Error()
 			}
 
 			code := err.GetMetadataValue(ErrorMetadataCode)
 			if code == nil {
-				code = http.StatusInternalServerError
+				statusCode = http.StatusInternalServerError
 			}
-			c.Status(code.(int)).JSON(&fiber.Map{
-				"success": false,
-				"message": msg,
-			})
-			return err
 		} else {
-			c.Status(http.StatusInternalServerError).JSON(&fiber.Map{
-				"success": false,
-				"message": valError.Error(),
-			})
-			return valError
+			message = valError.Error()
 		}
+		return response.JSONResponse(c, response.HTTPResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    statusCode,
+				Message: message,
+			},
+			Error: valError,
+		})
 	}
-	// Success Response
-	successResponse := map[string]interface{}{
-		"success": true,
-		"message": "Success",
-	}
-	statusCode := fiber.StatusOK
+
 	if valSuccess != nil {
-		if valSuccess.StatusCode != 0 {
-			statusCode = valSuccess.StatusCode
-		}
-		if valSuccess.Message == "" {
-			successResponse["message"] = "Success"
-		}
-		if valSuccess.Data != nil {
-			successResponse["data"] = valSuccess.Data
-		}
+		statusCode = valSuccess.StatusCode
+		message = valSuccess.Message
+	} else {
+		statusCode = http.StatusOK
+		message = "Success"
 	}
-	c.Status(statusCode).JSON(successResponse)
-	return nil
+
+	return response.JSONResponse(c, response.HTTPResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    statusCode,
+			Message: message,
+		},
+		Data: valSuccess.Data,
+	})
 }
 
 // HTTPMetadata is the function that will be used to create a metadata for HTTP response.

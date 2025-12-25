@@ -2,14 +2,13 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 	"runtime/debug"
 
-	gers "github.com/aidapedia/gdk/error"
-	ghttp "github.com/aidapedia/gdk/http"
 	"github.com/aidapedia/gdk/log"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
+
+	"github.com/aidapedia/gdk/http/server/response"
 )
 
 // WithRecover is the middleware that recovers from panics.
@@ -26,7 +25,9 @@ func WithRecover() fiber.Handler {
 				// We ignore the error returned by JSONResponse and return nil to the fiber handler
 				// because we have already written the response. Returning an error here would
 				// trigger Fiber's default error handler, which might overwrite our response.
-				_ = ghttp.JSONResponse(c, nil, gers.NewWithMetadata(recErr, ghttp.Metadata(http.StatusInternalServerError, "Internal Server Error")))
+				_ = response.JSONResponse(c, response.HTTPResponse{
+					Error: recErr,
+				})
 				err = nil
 				return
 			}
