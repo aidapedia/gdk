@@ -30,9 +30,6 @@ func JSONResponse(c fiber.Ctx, rawResponse HTTPResponse) error {
 		if rawResponse.Message != "" {
 			resp["message"] = rawResponse.Message
 		}
-		if rawResponse.Error != nil {
-			resp["error"] = rawResponse.Error
-		}
 		c.Status(statusCode).JSON(resp)
 		return rawResponse.Error
 	}

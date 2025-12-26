@@ -45,52 +45,41 @@ type SuccessResponse struct {
 //	 }
 func JSONResponse(c fiber.Ctx, valSuccess *SuccessResponse, valError error) error {
 	var (
-		statusCode int
-		message    string
+		res response.HTTPResponse
 	)
 
 	if valError != nil {
-		statusCode = http.StatusInternalServerError
-		message = "Internal Server Error"
+		res.BaseResponse.Code = http.StatusInternalServerError
+		res.BaseResponse.Message = "Internal Server Error"
+		res.Error = valError
 
 		err, ok := valError.(*gerr.Error)
 		if ok {
 			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
 			if msg == nil || msg == "" {
-				message = err.Error()
+				res.BaseResponse.Message = err.Error()
 			}
 
 			code := err.GetMetadataValue(ErrorMetadataCode)
-			if code == nil {
-				statusCode = http.StatusInternalServerError
+			if code != nil {
+				res.BaseResponse.Code = code.(int)
 			}
 		} else {
-			message = valError.Error()
+			res.BaseResponse.Message = valError.Error()
 		}
-		return response.JSONResponse(c, response.HTTPResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    statusCode,
-				Message: message,
-			},
-			Error: valError,
-		})
+		return response.JSONResponse(c, res)
 	}
 
 	if valSuccess != nil {
-		statusCode = valSuccess.StatusCode
-		message = valSuccess.Message
+		res.BaseResponse.Code = valSuccess.StatusCode
+		res.BaseResponse.Message = valSuccess.Message
+		res.Data = valSuccess.Data
 	} else {
-		statusCode = http.StatusOK
-		message = "Success"
+		res.BaseResponse.Code = http.StatusOK
+		res.BaseResponse.Message = "Success"
 	}
 
-	return response.JSONResponse(c, response.HTTPResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    statusCode,
-			Message: message,
-		},
-		Data: valSuccess.Data,
-	})
+	return response.JSONResponse(c, res)
 }
 
 // HTTPMetadata is the function that will be used to create a metadata for HTTP response.
