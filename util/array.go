@@ -1,6 +1,8 @@
 package util
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // ArrayStringToString function used to convert array string to string
 func ArrayStringToString(arr []string, delimiter string) string {
@@ -8,7 +10,10 @@ func ArrayStringToString(arr []string, delimiter string) string {
 	for _, v := range arr {
 		str += v + delimiter
 	}
-	return str[:len(str)-1]
+	if len(str) == 0 {
+		return ""
+	}
+	return str[:len(str)-len(delimiter)]
 }
 
 // ToArrayString converts any value to []string
