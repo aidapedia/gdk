@@ -7,6 +7,7 @@ import (
 
 	gerr "github.com/aidapedia/gdk/error"
 	"github.com/aidapedia/gdk/http/server/response"
+	"github.com/aidapedia/gdk/util"
 )
 
 type SuccessResponse struct {
@@ -56,13 +57,13 @@ func JSONResponse(c fiber.Ctx, valSuccess *SuccessResponse, valError error) erro
 		err, ok := valError.(*gerr.Error)
 		if ok {
 			msg := err.GetMetadataValue(ErrorMetadataUserMessage)
-			if msg == nil || msg == "" {
-				res.BaseResponse.Message = err.Error()
+			if msg != "" {
+				res.BaseResponse.Message = util.ToStr(msg)
 			}
 
 			code := err.GetMetadataValue(ErrorMetadataCode)
 			if code != nil {
-				res.BaseResponse.Code = code.(int)
+				res.BaseResponse.Code = util.ToInt(code)
 			}
 		} else {
 			res.BaseResponse.Message = valError.Error()

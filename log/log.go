@@ -11,6 +11,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	gdkCtx "github.com/aidapedia/gdk/context"
+	"github.com/aidapedia/gdk/util"
 	"github.com/google/uuid"
 )
 
@@ -145,10 +146,11 @@ func setLogLevel(level LoggerLevel) zapcore.Level {
 
 func fieldCheck(ctx context.Context) []zap.Field {
 	var fields = make([]zap.Field, 0)
-	logID := ctx.Value(gdkCtx.ContextKeyLogID)
-	if logID != nil {
-		fields = append(fields, zap.String(gdkCtx.ContextKeyLogID, GenerateLogID()))
+	logID := util.ToStr(ctx.Value(gdkCtx.ContextKeyLogID))
+	if logID == "" {
+		logID = GenerateLogID()
 	}
+	fields = append(fields, zap.String(gdkCtx.ContextKeyLogID, logID))
 	for k, v := range Log.defaultTags {
 		fields = append(fields, zap.Any(k, v))
 	}
