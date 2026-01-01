@@ -37,19 +37,19 @@ func (o *withMiddlewares) Apply(svc *Server) error {
 	return nil
 }
 
-func WithPostHook(hook ...fiber.OnShutdownHandler) Option {
-	return &withPostHook{hook: hook}
+func WithPostShutdown(hook ...fiber.OnPostShutdownHandler) Option {
+	return &withPostShutdown{hook: hook}
 }
 
-type withPostHook struct {
-	hook []fiber.OnShutdownHandler
+type withPostShutdown struct {
+	hook []fiber.OnPostShutdownHandler
 }
 
-func (o *withPostHook) Apply(svc *Server) error {
+func (o *withPostShutdown) Apply(svc *Server) error {
 	if svc.App == nil {
 		return ErrAppNil
 	}
-	svc.App.Hooks().OnShutdown(o.hook...)
+	svc.App.Hooks().OnPostShutdown(o.hook...)
 	return nil
 }
 
