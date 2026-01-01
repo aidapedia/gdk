@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -56,13 +57,28 @@ func (c *GoRedisClient) GET(ctx context.Context, key string) StringResult {
 }
 
 func (c *GoRedisClient) SET(ctx context.Context, key string, val interface{}, exp time.Duration) error {
+	if reflect.ValueOf(val).Kind() == reflect.Struct {
+		jsonVal, err := sonic.MarshalString(val)
+		if err != nil {
+			return err
+		}
+		return c.Client.Set(ctx, key, jsonVal, exp).Err()
+	}
 	return c.Client.Set(ctx, key, val, exp).Err()
 }
 
-func (c *GoRedisClient) HSET(ctx context.Context, key string, fields map[string]string) error {
+func (c *GoRedisClient) HSET(ctx context.Context, key string, fields map[string]interface{}) error {
 	values := []interface{}{}
 	for field, val := range fields {
-		values = append(values, field, val)
+		if reflect.ValueOf(val).Kind() == reflect.Struct {
+			jsonVal, err := sonic.MarshalString(val)
+			if err != nil {
+				return err
+			}
+			values = append(values, field, jsonVal)
+		} else {
+			values = append(values, field, val)
+		}
 	}
 	return c.Client.HSet(ctx, key, values...).Err()
 }
