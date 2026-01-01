@@ -166,7 +166,7 @@ func ToInt8(v interface{}) int8 {
 	case float64:
 		return int8(v)
 	case []byte:
-		result, err := strconv.Atoi(string(v))
+		result, err := strconv.ParseInt(string(v), 10, 8)
 		if err != nil {
 			return 0
 		}
