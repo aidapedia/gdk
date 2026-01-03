@@ -119,7 +119,8 @@ func (m *Manager) SetSecretStore(ctx context.Context) error {
 			return fmt.Errorf("SECRET_VAULT_TOKEN environment variable is not set")
 		}
 		path := environment.GetSecretVaultPath()
-		s := secret.NewSecretVault(address, string(secret.VaultEngineCubbyHole), token, path)
+		engine := environment.GetSecretVaultEngine()
+		s := secret.NewSecretVault(address, engine, token, path)
 		return s.GetSecret(ctx, m.secretStore)
 	default:
 		return fmt.Errorf("unknown secret type: %s", m.secretType)

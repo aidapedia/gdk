@@ -9,7 +9,7 @@ import (
 
 func TestVault(t *testing.T) {
 	ctx := context.Background()
-	f := secret.NewSecretVault("your-address", string(secret.VaultEngineCubbyHole), "your-token", "your-path")
+	f := secret.NewSecretVault("your-address", "cubbyhole", "your-token", "your-path")
 
 	var cfg struct {
 		Auth struct {

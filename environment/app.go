@@ -52,3 +52,10 @@ func GetSecretVaultPath() string {
 	}
 	return ""
 }
+
+func GetSecretVaultEngine() string {
+	if path := os.Getenv("SECRET_VAULT_ENGINE"); path != "" {
+		return path
+	}
+	return ""
+}

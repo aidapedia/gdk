@@ -4,39 +4,28 @@ import (
 	"context"
 	"errors"
 
+	"github.com/hashicorp/vault/api"
 	vault "github.com/hashicorp/vault/api"
 	"github.com/mitchellh/mapstructure"
 )
 
 type VaultEngine string
 
-const (
-	VaultEngineCubbyHole VaultEngine = "cubbyhole"
-)
-
 type Vault struct {
 	config *vault.Config
-	engine VaultEngine
+	engine string
 	token  string
 	path   string
 }
 
 func NewSecretVault(address string, engine, token, path string) Interface {
-	vaultEngines := map[string]VaultEngine{
-		"cubbyhole": VaultEngineCubbyHole,
-	}
-
 	config := vault.DefaultConfig()
 	config.Address = address
-	engineVal, ok := vaultEngines[engine]
-	if !ok {
-		return nil
-	}
 	return &Vault{
 		config: config,
 		token:  token,
 		path:   path,
-		engine: engineVal,
+		engine: engine,
 	}
 }
 
@@ -52,7 +41,7 @@ func (v *Vault) GetSecret(ctx context.Context, target interface{}) error {
 	}
 	client.SetToken(v.token)
 
-	secret, err := client.KVv1(string(v.engine)).Get(ctx, v.path)
+	secret, err := client.KVv1(v.engine).Get(ctx, v.path)
 	if err != nil {
 		return err
 	}
@@ -69,10 +58,24 @@ func (v *Vault) GetSecret(ctx context.Context, target interface{}) error {
 		return err
 	}
 
-	err = decoder.Decode(secret.Data)
+	err = decoder.Decode(getData(secret))
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func getData(val *api.KVSecret) interface{} {
+	if val == nil {
+		return nil
+	}
+	switch val.Raw.MountType {
+	case "cubbyhole":
+		return val.Data
+	case "kv":
+		return val.Data["data"]
+	default:
+		return nil
+	}
 }
