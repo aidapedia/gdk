@@ -1,4 +1,4 @@
-package dek
+package aes
 
 import (
 	"crypto/aes"
