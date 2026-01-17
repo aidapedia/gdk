@@ -4,24 +4,47 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"io"
+
+	gcrypt "github.com/aidapedia/gdk/cryptography"
+	gencryption "github.com/aidapedia/gdk/cryptography/encryption"
+	"golang.org/x/crypto/hkdf"
 )
 
-// Shield represents a DEK shield that encrypts and decrypts data using AES.
-type Shield struct {
-	kek []byte
+const algorithmAES256GCM = "AES-256-GCM"
+
+// AES represents a DEK AES that encrypts and decrypts data using AES.
+type AES struct {
+	kek         []byte
+	dekByteSize int
+	kekVersion  int
 }
 
-// NewShield creates a new Shield instance with the provided KEK.
-func NewShield(kek []byte) *Shield {
-	return &Shield{
-		kek: kek,
+// NewAES creates a new AES instance with the provided KEK.
+// kekVersion identifies which KEK is being used (for key rotation).
+func NewAES(kek []byte, dekByteSize int, kekVersion int) (gcrypt.EncryptionInterface, error) {
+	switch len(kek) {
+	case 16, 24, 32:
+	default:
+		return nil, fmt.Errorf("invalid KEK size: %d bytes (must be 16, 24, or 32)", len(kek))
 	}
+	switch dekByteSize {
+	case 16, 24, 32:
+	default:
+		return nil, fmt.Errorf("invalid DEK size: %d bytes (must be 16, 24, or 32)", dekByteSize)
+	}
+	return &AES{
+		kek:         kek,
+		dekByteSize: dekByteSize,
+		kekVersion:  kekVersion,
+	}, nil
 }
 
 // encrypt encrypts the DEK using the provided KEK.
-func (s *Shield) encrypt(plaintextDEK []byte) ([]byte, error) {
+func (s *AES) Encrypt(plaintextDEK []byte) ([]byte, error) {
 	block, err := aes.NewCipher(s.kek)
 	if err != nil {
 		return nil, err
@@ -38,7 +61,7 @@ func (s *Shield) encrypt(plaintextDEK []byte) ([]byte, error) {
 }
 
 // decrypt decrypts the DEK using the provided KEK.
-func (s *Shield) decrypt(wrappedDEK []byte) ([]byte, error) {
+func (s *AES) Decrypt(wrappedDEK []byte) ([]byte, error) {
 	block, err := aes.NewCipher(s.kek)
 	if err != nil {
 		return nil, err
@@ -55,18 +78,13 @@ func (s *Shield) decrypt(wrappedDEK []byte) ([]byte, error) {
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
-// EncryptedRecord holds the components you must save to your database.
-type EncryptedRecord struct {
-	Ciphertext string // The encrypted PII
-	WrappedDEK string // The DEK, encrypted by your Master Key (KEK)
-}
-
-func (s *Shield) EnvelopeEncrypt(pii []byte) (*EncryptedRecord, error) {
-	// 1. Generate a random 32-byte DEK locally
-	dek := make([]byte, 32)
+func (s *AES) EncryptRecord(pii []byte, aad []byte) (*gencryption.EncryptedRecord, error) {
+	// 1. Generate a DEK locally
+	dek := make([]byte, s.dekByteSize)
 	if _, err := io.ReadFull(rand.Reader, dek); err != nil {
 		return nil, err
 	}
+	defer zeroDEK(dek)
 
 	// 2. Encrypt the PII using this local DEK
 	block, err := aes.NewCipher(dek)
@@ -81,21 +99,23 @@ func (s *Shield) EnvelopeEncrypt(pii []byte) (*EncryptedRecord, error) {
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
-	ciphertext := aesgcm.Seal(nonce, nonce, pii, nil)
+	ciphertext := aesgcm.Seal(nonce, nonce, pii, aad)
 
 	// 3. Wrap the DEK using the remote Master Key (KEK)
-	wrappedDEK, err := s.encrypt(dek)
+	wrappedDEK, err := s.Encrypt(dek)
 	if err != nil {
 		return nil, err
 	}
 
-	return &EncryptedRecord{
+	return &gencryption.EncryptedRecord{
 		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext),
 		WrappedDEK: base64.StdEncoding.EncodeToString(wrappedDEK),
+		KEKVersion: s.kekVersion,
+		Algorithm:  algorithmAES256GCM,
 	}, nil
 }
 
-func (s *Shield) EnvelopeDecrypt(record *EncryptedRecord) (string, error) {
+func (s *AES) DecryptRecord(record *gencryption.EncryptedRecord, aad []byte) (string, error) {
 	// 1. Decode base64 strings
 	wrappedDEK, err := base64.StdEncoding.DecodeString(record.WrappedDEK)
 	if err != nil {
@@ -107,10 +127,11 @@ func (s *Shield) EnvelopeDecrypt(record *EncryptedRecord) (string, error) {
 	}
 
 	// 2. Unwrap the DEK using the remote KMS
-	dek, err := s.decrypt(wrappedDEK)
+	dek, err := s.Decrypt(wrappedDEK)
 	if err != nil {
 		return "", err
 	}
+	defer zeroDEK(dek)
 
 	// 3. Decrypt the PII using the recovered DEK
 	block, err := aes.NewCipher(dek)
@@ -127,6 +148,28 @@ func (s *Shield) EnvelopeDecrypt(record *EncryptedRecord) (string, error) {
 	}
 	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
 
-	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
+	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, aad)
 	return string(plaintext), err
+}
+
+// zeroDEK overwrites the DEK slice with zeros.
+func zeroDEK(dek []byte) {
+	for i := range dek {
+		dek[i] = 0
+	}
+}
+
+// DeriveRow derives a unique DEK from the KEK using HKDF-SHA256 for a specific entity row.
+// The derived DEK is deterministic: same (KEK, entityType, entityID) always produces the same DEK.
+// Nothing needs to be stored in the database — the DEK is re-derived on every access.
+// Always defer Close() to zero the DEK from memory.
+func (s *AES) DeriveRow(entityType string, entityID int64, aad []byte) (gcrypt.RowEncryptorInterface, error) {
+	info := []byte(fmt.Sprintf("%s:%d", entityType, entityID))
+	reader := hkdf.New(sha256.New, s.kek, nil, info)
+	dek := make([]byte, s.dekByteSize)
+	if _, err := io.ReadFull(reader, dek); err != nil {
+		zeroDEK(dek)
+		return nil, err
+	}
+	return newRowEncryptor(dek, aad)
 }
