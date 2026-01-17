@@ -6,22 +6,27 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
+
+	gcrypt "github.com/aidapedia/gdk/cryptography"
+	gencryption "github.com/aidapedia/gdk/cryptography/encryption"
 )
 
-// Shield represents a DEK shield that encrypts and decrypts data using AES.
-type Shield struct {
-	kek []byte
+// AES represents a DEK AES that encrypts and decrypts data using AES.
+type AES struct {
+	kek         []byte
+	dekByteSize int
 }
 
-// NewShield creates a new Shield instance with the provided KEK.
-func NewShield(kek []byte) *Shield {
-	return &Shield{
-		kek: kek,
+// NewAES creates a new AES instance with the provided KEK.
+func NewAES(kek []byte, dekByteSize int) gcrypt.EncryptionInterface {
+	return &AES{
+		kek:         kek,
+		dekByteSize: dekByteSize,
 	}
 }
 
 // encrypt encrypts the DEK using the provided KEK.
-func (s *Shield) encrypt(plaintextDEK []byte) ([]byte, error) {
+func (s *AES) Encrypt(plaintextDEK []byte) ([]byte, error) {
 	block, err := aes.NewCipher(s.kek)
 	if err != nil {
 		return nil, err
@@ -38,7 +43,7 @@ func (s *Shield) encrypt(plaintextDEK []byte) ([]byte, error) {
 }
 
 // decrypt decrypts the DEK using the provided KEK.
-func (s *Shield) decrypt(wrappedDEK []byte) ([]byte, error) {
+func (s *AES) Decrypt(wrappedDEK []byte) ([]byte, error) {
 	block, err := aes.NewCipher(s.kek)
 	if err != nil {
 		return nil, err
@@ -55,15 +60,9 @@ func (s *Shield) decrypt(wrappedDEK []byte) ([]byte, error) {
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
-// EncryptedRecord holds the components you must save to your database.
-type EncryptedRecord struct {
-	Ciphertext string // The encrypted PII
-	WrappedDEK string // The DEK, encrypted by your Master Key (KEK)
-}
-
-func (s *Shield) EnvelopeEncrypt(pii []byte) (*EncryptedRecord, error) {
-	// 1. Generate a random 32-byte DEK locally
-	dek := make([]byte, 32)
+func (s *AES) EncryptRecord(pii []byte) (*gencryption.EncryptedRecord, error) {
+	// 1. Generate a DEK locally
+	dek := make([]byte, s.dekByteSize)
 	if _, err := io.ReadFull(rand.Reader, dek); err != nil {
 		return nil, err
 	}
@@ -84,18 +83,18 @@ func (s *Shield) EnvelopeEncrypt(pii []byte) (*EncryptedRecord, error) {
 	ciphertext := aesgcm.Seal(nonce, nonce, pii, nil)
 
 	// 3. Wrap the DEK using the remote Master Key (KEK)
-	wrappedDEK, err := s.encrypt(dek)
+	wrappedDEK, err := s.Encrypt(dek)
 	if err != nil {
 		return nil, err
 	}
 
-	return &EncryptedRecord{
+	return &gencryption.EncryptedRecord{
 		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext),
 		WrappedDEK: base64.StdEncoding.EncodeToString(wrappedDEK),
 	}, nil
 }
 
-func (s *Shield) EnvelopeDecrypt(record *EncryptedRecord) (string, error) {
+func (s *AES) DecryptRecord(record *gencryption.EncryptedRecord) (string, error) {
 	// 1. Decode base64 strings
 	wrappedDEK, err := base64.StdEncoding.DecodeString(record.WrappedDEK)
 	if err != nil {
@@ -107,7 +106,7 @@ func (s *Shield) EnvelopeDecrypt(record *EncryptedRecord) (string, error) {
 	}
 
 	// 2. Unwrap the DEK using the remote KMS
-	dek, err := s.decrypt(wrappedDEK)
+	dek, err := s.Decrypt(wrappedDEK)
 	if err != nil {
 		return "", err
 	}

@@ -11,13 +11,13 @@ func TestWrappedDEKConsistency(t *testing.T) {
 	// 1. Setup KEK
 	kek := make([]byte, 32)
 	io.ReadFull(rand.Reader, kek)
-	shield := NewShield(kek)
+	AES := NewAES(kek, 16)
 
 	pii := []byte("secret data")
 
 	// 2. Encrypt twice
-	record1, _ := shield.EnvelopeEncrypt(pii)
-	record2, _ := shield.EnvelopeEncrypt(pii)
+	record1, _ := AES.EncryptRecord(pii)
+	record2, _ := AES.EncryptRecord(pii)
 
 	fmt.Println("\n--- WrappedDEK Comparison ---")
 	fmt.Printf("Attempt 1 WrappedDEK: %s\n", record1.WrappedDEK)

@@ -1,7 +1,7 @@
 package bcrypt
 
 import (
-	"github.com/aidapedia/gdk/cryptography/hash"
+	gcrypt "github.com/aidapedia/gdk/cryptography"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -9,7 +9,7 @@ type Bcrypt struct {
 	cost int
 }
 
-func New(cost int) hash.Interface {
+func New(cost int) gcrypt.HashInterface {
 	return &Bcrypt{
 		cost: cost,
 	}

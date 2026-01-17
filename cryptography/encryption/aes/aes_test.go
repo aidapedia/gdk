@@ -8,21 +8,21 @@ import (
 	"testing"
 )
 
-func TestShield_EnvelopeEncryptDecrypt(t *testing.T) {
+func TestAES_EncryptDecrypt(t *testing.T) {
 	// Generate a random KEK (32 bytes for AES-256)
 	kek := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, kek); err != nil {
 		t.Fatal(err)
 	}
 
-	shield := NewShield(kek)
+	AES := NewAES(kek, 32)
 
 	originalData := []byte("hello world")
 
-	// Test EnvelopeEncrypt
-	record, err := shield.EnvelopeEncrypt(originalData)
+	// Test Encrypt
+	record, err := AES.EncryptRecord(originalData)
 	if err != nil {
-		t.Fatalf("EnvelopeEncrypt failed: %v", err)
+		t.Fatalf("Encrypt failed: %v", err)
 	}
 
 	if record.Ciphertext == "" {
@@ -32,10 +32,10 @@ func TestShield_EnvelopeEncryptDecrypt(t *testing.T) {
 		t.Error("WrappedDEK is empty")
 	}
 
-	// Test EnvelopeDecrypt
-	decryptedData, err := shield.EnvelopeDecrypt(record)
+	// Test Decrypt
+	decryptedData, err := AES.DecryptRecord(record)
 	if err != nil {
-		t.Fatalf("EnvelopeDecrypt failed: %v", err)
+		t.Fatalf("Decrypt failed: %v", err)
 	}
 
 	if decryptedData != string(originalData) {
@@ -43,20 +43,20 @@ func TestShield_EnvelopeEncryptDecrypt(t *testing.T) {
 	}
 }
 
-func TestShield_EncryptDecryptDEK(t *testing.T) {
+func TestAES_EncryptDecryptDEK(t *testing.T) {
 	kek := make([]byte, 32)
 	io.ReadFull(rand.Reader, kek)
-	shield := NewShield(kek)
+	AES := NewAES(kek, 32)
 
 	dek := make([]byte, 32)
 	io.ReadFull(rand.Reader, dek)
 
-	wrapped, err := shield.encrypt(dek)
+	wrapped, err := AES.Encrypt(dek)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	unwrapped, err := shield.decrypt(wrapped)
+	unwrapped, err := AES.Decrypt(wrapped)
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
@@ -66,60 +66,60 @@ func TestShield_EncryptDecryptDEK(t *testing.T) {
 	}
 }
 
-func TestShield_InvalidKEK(t *testing.T) {
+func TestAES_InvalidKEK(t *testing.T) {
 	// AES keys must be 16, 24, or 32 bytes.
 	invalidKEK := []byte("too short")
-	shield := NewShield(invalidKEK)
+	AES := NewAES(invalidKEK, 32)
 
 	dek := make([]byte, 32)
 	io.ReadFull(rand.Reader, dek)
 
-	_, err := shield.encrypt(dek)
+	_, err := AES.Encrypt(dek)
 	if err == nil {
 		t.Error("Expected error for invalid KEK size, got nil")
 	}
 }
 
-func TestShield_CorruptedCiphertext(t *testing.T) {
+func TestAES_CorruptedCiphertext(t *testing.T) {
 	kek := make([]byte, 32)
 	io.ReadFull(rand.Reader, kek)
-	shield := NewShield(kek)
+	AES := NewAES(kek, 32)
 
 	originalData := []byte("secret")
-	record, _ := shield.EnvelopeEncrypt(originalData)
+	record, _ := AES.EncryptRecord(originalData)
 
 	// Corrupt the ciphertext
 	decodedData, _ := base64.StdEncoding.DecodeString(record.Ciphertext)
 	decodedData[len(decodedData)-1] ^= 0xFF
 	record.Ciphertext = base64.StdEncoding.EncodeToString(decodedData)
 
-	_, err := shield.EnvelopeDecrypt(record)
+	_, err := AES.DecryptRecord(record)
 	if err == nil {
 		t.Error("Expected error for corrupted ciphertext, got nil")
 	}
 }
 
-func BenchmarkShield_EnvelopeEncrypt(b *testing.B) {
+func BenchmarkAES_Encrypt(b *testing.B) {
 	kek := make([]byte, 32)
 	io.ReadFull(rand.Reader, kek)
-	shield := NewShield(kek)
+	AES := NewAES(kek, 32)
 	pii := []byte("highly sensitive information")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = shield.EnvelopeEncrypt(pii)
+		_, _ = AES.Encrypt(pii)
 	}
 }
 
-func BenchmarkShield_EnvelopeDecrypt(b *testing.B) {
+func BenchmarkAES_Decrypt(b *testing.B) {
 	kek := make([]byte, 32)
 	io.ReadFull(rand.Reader, kek)
-	shield := NewShield(kek)
+	AES := NewAES(kek, 32)
 	pii := []byte("highly sensitive information")
-	record, _ := shield.EnvelopeEncrypt(pii)
+	record, _ := AES.Encrypt(pii)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = shield.EnvelopeDecrypt(record)
+		_, _ = AES.Decrypt(record)
 	}
 }
