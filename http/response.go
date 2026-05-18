@@ -5,9 +5,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
+	util "github.com/aidapedia/gdk/converter"
 	gerr "github.com/aidapedia/gdk/error"
 	"github.com/aidapedia/gdk/http/server/response"
-	"github.com/aidapedia/gdk/util"
 )
 
 type SuccessResponse struct {

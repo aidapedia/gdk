@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aidapedia/gdk/converter"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	gdkCtx "github.com/aidapedia/gdk/context"
-	"github.com/aidapedia/gdk/util"
+	xctx "github.com/aidapedia/gdk/context"
 	"github.com/google/uuid"
 )
 
@@ -36,6 +36,21 @@ type FileConfig struct {
 	MaxBackups   int    `json:"max_backups"`
 	MaxAge       int    `json:"max_age"`
 	Compress     bool   `json:"compress"`
+}
+
+func init() {
+	// build default Log.
+	// used in unit test, or other flow that does not initiate with main.go
+	config := zap.NewProductionConfig()
+	config.DisableCaller = true
+	config.DisableStacktrace = true
+	logger, err := config.Build()
+	if err != nil {
+		log.Fatalf("failed to init logger: %s", err)
+	}
+	Log = &Logger{
+		Logger: logger,
+	}
 }
 
 func (cfg Config) build() *Logger {
@@ -146,11 +161,11 @@ func setLogLevel(level LoggerLevel) zapcore.Level {
 
 func fieldCheck(ctx context.Context) []zap.Field {
 	var fields = make([]zap.Field, 0)
-	logID := util.ToStr(ctx.Value(gdkCtx.ContextKeyLogID))
+	logID := converter.ToStr(ctx.Value(xctx.ContextKeyLogID))
 	if logID == "" {
 		logID = GenerateLogID()
 	}
-	fields = append(fields, zap.String(gdkCtx.ContextKeyLogID, logID))
+	fields = append(fields, zap.String("log_id", logID))
 	for k, v := range Log.defaultTags {
 		fields = append(fields, zap.Any(k, v))
 	}

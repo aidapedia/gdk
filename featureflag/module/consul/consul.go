@@ -3,8 +3,8 @@ package consul
 import (
 	"context"
 
+	"github.com/aidapedia/gdk/converter"
 	"github.com/aidapedia/gdk/featureflag/module"
-	"github.com/aidapedia/gdk/util"
 	"github.com/bytedance/sonic"
 	consulCli "github.com/hashicorp/consul/api"
 )
@@ -46,7 +46,7 @@ func (i *FeatureFlag) GetString(ctx context.Context, key string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	return util.ToStr(value), nil
+	return converter.ToStr(value), nil
 }
 
 func (i *FeatureFlag) GetInt(ctx context.Context, key string) (int, error) {
@@ -54,7 +54,7 @@ func (i *FeatureFlag) GetInt(ctx context.Context, key string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return util.ToInt(value), nil
+	return converter.ToInt(value), nil
 }
 
 func (i *FeatureFlag) GetBool(ctx context.Context, key string) (bool, error) {
@@ -62,7 +62,7 @@ func (i *FeatureFlag) GetBool(ctx context.Context, key string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return util.ToBool(value), nil
+	return converter.ToBool(value), nil
 }
 
 func (i *FeatureFlag) GetStruct(ctx context.Context, key string, v interface{}) error {
